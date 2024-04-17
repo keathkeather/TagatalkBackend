@@ -276,9 +276,9 @@ model User {
   userId       String   @id @map("authId") @db.Uuid
   auth         Auth     @relation(fields: [userId], references: [authId])
   email        String   @unique
-  name         String 
-  userStreak   Int
-  isDeleted    Boolean 
+  name         String?
+  userStreak   Int      @default(0)
+  isDeleted    Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   deletedAt    DateTime?
@@ -295,7 +295,7 @@ model User_Progress {
   game         Game        @relation(fields: [gameId], references: [id])
   gameId       String      @db.Uuid
   isCompleted  Boolean
-  isDeleted    Boolean
+  isDeleted    Boolean  @default(false)
 }
 
 
@@ -305,7 +305,7 @@ model Game {
   gameType String
   gameLevel Int
   gameValue Int
-  isDeleted Boolean
+  isDeleted    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?  
@@ -320,7 +320,7 @@ model Game_Assets {
   assetName String
   assetType String
   fileUrl   String
-  isDeleted Boolean
+  isDeleted Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
@@ -333,7 +333,7 @@ model Report{
   user User @relation(fields: [userId], references:[userId])
   reportTitle String
   reportDescription String
-  isDeleted Boolean
+  isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
   deletedAt DateTime?
 }
@@ -345,7 +345,7 @@ model Feedback{
   user User @relation(fields: [userId], references:[userId])
   feedbackTitle String
   feedbackDescription String
-  isDeleted Boolean
+  isDeleted Boolean @default(false)
   createdAt DateTime @default(now())
   deletedAt DateTime?
 }
@@ -357,7 +357,7 @@ model Notification {
   user User @relation(fields: [userId], references:[userId])
   notificationTitle String
   notificationDescription String
-  isDeleted Boolean
+  isDeleted Boolean @default(false)
   createdAt DateTime @default(now())
   deletedAt DateTime 
   notification_setting_id Int @unique
