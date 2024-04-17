@@ -9,12 +9,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trigger_update_confirmed_at
 BEFORE INSERT OR UPDATE OF email_confirmed_at, phone_confirmed_at
-ON Auth
+ON "Auth"
 FOR EACH ROW
 EXECUTE FUNCTION update_confirmed_at();
 
-
---! THIS IS AN ERROR need to fix  Migration `20240409191735_confirmed_at_trigger` failed to apply cleanly to the shadow database.
---!Error code: P1014
---!Error:
---!The underlying table for model `auth` does not exist. 
