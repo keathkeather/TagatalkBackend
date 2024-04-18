@@ -237,11 +237,11 @@ model sso_providers {
 //* this is the auth schema
 model Auth {
   instance_id                 String?       @db.Uuid
-  authId                      String        @id @db.Uuid
+  authId                      String        @id @default(uuid()) @db.Uuid
   aud                         String?       @db.VarChar(255)
   role                        role          @default(USER)
   email                       String?       @db.VarChar(255)
-  encrypted_password          String?       @db.VarChar(255)
+  encrypted_password          String?       @db.VarChar()
   email_confirmed_at          DateTime?     @db.Timestamptz(6)
   invited_at                  DateTime?     @db.Timestamptz(6)
   confirmation_token          String?       @db.VarChar(255)
@@ -262,7 +262,7 @@ model Auth {
   phone_change                String?       @default("")
   phone_change_token          String?       @default("") @db.VarChar(255)
   phone_change_sent_at        DateTime?     @db.Timestamptz(6)
-  confirmed_at                DateTime?     @db.Timestamptz(6) //TODO add fucntion to set all confirmed_at(email_confirmed_at, phone_confirmed_at,)
+  confirmed_at                DateTime?     @db.Timestamptz(6) 
   email_change_token_current  String?       @default("") @db.VarChar(255)
   email_change_confirm_status Int?          @default(0) @db.SmallInt
   banned_until                DateTime?     @db.Timestamptz(6)
@@ -274,7 +274,7 @@ model Auth {
   identities                  identities[]
   mfa_factors                 mfa_factors[]
   sessions                    sessions[]
-  user                        User?
+  user                        User?        
 
   @@index([instance_id])
   @@index([is_anonymous])
@@ -282,8 +282,8 @@ model Auth {
 }
 
 model User {
-  userId       String   @id @map("authId") @db.Uuid
-  auth         Auth     @relation(fields: [userId], references: [authId])
+  userId       String   @id  @db.Uuid
+  auth         Auth    @relation(fields: [userId], references: [authId])
   email        String   @unique
   name         String?
   userStreak   Int      @default(0)
