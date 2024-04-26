@@ -13,7 +13,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     console.log('Inside LocalStrategy');
     const user = await this.authService.validateUser(email, password);
     console.log(user)
-    if (!user) throw new HttpException('wrong ka pre', 401);
+    if (!user) throw new HttpException('Unauthroized user', 401);
     return user;
   }
 }

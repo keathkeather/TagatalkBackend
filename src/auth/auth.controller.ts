@@ -27,10 +27,10 @@ export class AuthController {
     status(@Req() req:Request){
         return req.user;
     }
-    // @Post('loginAdmin')
-    // @UseGuards(LocalGuard)
-    // async loginAdmin(@Req() req:Request){
-    //     return req.user
-    // }
+    @Post('loginAdmin')
+    @UseGuards(LocalGuard)
+    async loginAdmin(@Req() req:Request){
+        return req.user
+    }
 
 }

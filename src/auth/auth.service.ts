@@ -58,18 +58,17 @@ export class AuthService {
 
         //* Find the user through emal
         const user = await this.findByEmail(email);
-
         //* if user is nto found throw an Error 
         if (!user) {
           throw new BadRequestException('user not found');
         }
         try {
           const saltedPassword = password+process.env.SALT; //* Add the salt to the password
-          const match = await bcrypt.compare(password, user.encrypted_password); //* Compare the password with the encrypted password
+          const match = await bcrypt.compare(saltedPassword, user.encrypted_password); //* Compare the password with the encrypted password
           if (match) {
             return this.jwtService.sign({ email: user.email ,role:user.role}); //* Signs the token with the email and role of the user
           } else {
-            throw new UnauthorizedException('Invalid password');
+            throw new UnauthorizedException('Invalid password/email');
           }
         } catch (error) {
           throw new InternalServerErrorException('Failed to validate user');
