@@ -1,18 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserController } from './user.controller';
-import { UserService } from './user.service';
+import { FeedbackController } from './feedback.controller';
+import { FeedbackService } from './feedback.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 
-describe('UserController', () => {
-  let controller: UserController;
+describe('FeedbackController', () => {
+  let controller: FeedbackController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [UserController],providers:[UserService,PrismaService,JwtService]
+      controllers: [FeedbackController],providers:[FeedbackService,PrismaService,JwtService]
     }).compile();
 
-    controller = module.get<UserController>(UserController);
+    controller = module.get<FeedbackController>(FeedbackController);
   });
 
   it('should be defined', () => {
