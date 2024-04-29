@@ -7,6 +7,7 @@ import { error } from 'console';
 import { JwtService } from '@nestjs/jwt';
 import { loginDto } from './DTO/login.dto';
 import { Role } from './enums/role.enum';
+import { Request } from 'express';
 @Injectable()
 export class AuthService {
   //* Find the user through the email (Queries the database for the user with the email provided)
@@ -27,8 +28,48 @@ export class AuthService {
 
     })
   }  
-  constructor(private prisma: PrismaService,private jwtService:JwtService) {}
+  
+  async findUserByPassword(password:string):Promise<Auth|null>{
+    const encryptedPassword = await this.encryptPassword(password)
+    return this.prisma.auth.findFirst({
+      where:{
+        encrypted_password:encryptedPassword
+      }
+    })
+  }
+  async getAllBannedUsers():Promise<Auth[]|null>{
+    try{
+      return this.prisma.auth.findMany({
+        where:{
+          banned_until:{
+            not:null
+          }
+        }
+      });
+    }catch(Error){
+      throw Error('Failed to get all banned users');
+    }
+  }
+  async getUserByID(userId:string):Promise<Auth|null>{
+    try{
+      return this.prisma.auth.findUnique({
+        where:{
+          authId:userId
+        }
+      })
+    }catch(Error){
+      throw Error('Failed to get user by ID')
+    }
+  }
 
+
+
+  async encryptPassword(password:string):Promise<string|null>{
+    const saltedPassword = password+process.env.SALT
+    return await bcrypt.hash(saltedPassword,10)
+  }
+  constructor(private prisma: PrismaService,private jwtService:JwtService) {}
+    
     async RegisterUser(registerDto: RegisterDto): Promise<Auth> {
         const { email, password } = registerDto;
         if (!email || !password) {
@@ -99,8 +140,31 @@ export class AuthService {
           console.log(error)
           throw new InternalServerErrorException('failed to validate admin')
         }
-    }
-   
+      }
+      async changePassword(request:Request, newPassword:string):Promise<Auth|null>{
+        try{
+          const userEmail = (request.user as Auth).email
+          console.log(userEmail)
+          
+          const user = await this.findByEmail(userEmail)
+          if(!user){
+            throw new BadRequestException('User not found')
+          }
+          const newEncryptedPassword = await this.encryptPassword(newPassword)
+          return await this.prisma.auth.update({
+            where:{
+              authId: user.authId
+            },
+            data:{
+              encrypted_password:newEncryptedPassword
+            }
+          })
+          
+        }catch(err){
+          console.log(err)
+          throw new UnauthorizedException('Failed to change password')
+        }
+      }
    
 
 }
