@@ -6,9 +6,9 @@ import { feedbackDto } from './DTO/feedback.dto';
 export class FeedbackService {
     constructor(private prisma: PrismaService) {}
 
-    async createFeedback(feedbackDto:feedbackDto){
+    async createFeedback(userId:string,feedbackDto:feedbackDto){
         try{
-            const { feedbackTitle, feedbackDescription, userId } = feedbackDto;
+            const { feedbackTitle, feedbackDescription } = feedbackDto;
             const newFeedback = await this.prisma.feedback.create({
                 data:{
                     feedbackTitle: feedbackTitle,
@@ -16,6 +16,7 @@ export class FeedbackService {
                     userId:userId
                 }
             })
+            return newFeedback;
 
         }catch(Error){
             throw new Error('failed to create feedback')
@@ -23,7 +24,13 @@ export class FeedbackService {
     }
     async getAllFeedback():Promise<Feedback[]|null>{
         try{
-            return this.prisma.feedback.findMany();
+            return this.prisma.feedback.findMany(
+                {
+                    where:{
+                        isDeleted:false
+                    }
+                }
+            );
         }catch(Error){
             throw new Error('failed to get all feedback')
         }
