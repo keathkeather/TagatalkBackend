@@ -10,7 +10,7 @@ export class FeedbackController {
     @Post('createFeedback/:userId')
     async createFeedback(@Param('userId')userId:string, @Body() feedbackDto: feedbackDto) {
        try{
-        return this.feedbackService.createFeedback(feedbackDto);
+        return this.feedbackService.createFeedback(userId,feedbackDto);
        }catch(Eeror){
         throw new HttpErrorByCode[500]('Failed to create feedback');
        }
