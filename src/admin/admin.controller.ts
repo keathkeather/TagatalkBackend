@@ -74,7 +74,10 @@ export class AdminController {
     async getAllDeletedFeedbacks(){
         return this.adminService.getAllDeletedFeedbacks();
     }
-    
+    @Put('promoteUserToAdmin/:authId')
+    async promoteUserToAdmin(@Param('authId') authId:string){
+        return this.adminService.promoteUserToAdmin(authId);
+    }
 
 
 
