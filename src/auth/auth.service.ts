@@ -107,11 +107,12 @@ export class AuthService {
           const saltedPassword = password+process.env.SALT; //* Add the salt to the password
           const match = await bcrypt.compare(saltedPassword, user.encrypted_password); //* Compare the password with the encrypted password
           if (match) {
-            return this.jwtService.sign({ email: user.email ,role:user.role}); //* Signs the token with the email and role of the user
+            return this.jwtService.sign({ email: user.email ,role:user.role,authId: user.authId}); //* Signs the token with the email and role of the user
           } else {
             throw new UnauthorizedException('Invalid password/email');
           }
         } catch (error) {
+          console.log(error);
           throw new InternalServerErrorException('Failed to validate user');
         }
       }
@@ -130,7 +131,7 @@ export class AuthService {
             
             //* Signs the token with the email and role of the user
             return this.jwtService.sign({email:user.email, role:user.role})
-        
+
           }else{
             
             throw new UnauthorizedException('Invalid password/email');

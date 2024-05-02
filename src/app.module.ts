@@ -8,9 +8,10 @@ import { ReportModule } from './report/report.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { AdminModule } from './admin/admin.module';
 import { GameModule } from './game/game.module';
+import { GameAssetsModule } from './game-assets/game-assets.module';
 
 @Module({
-  imports: [AuthModule, UserModule, PrismaModule, ReportModule, FeedbackModule, AdminModule, GameModule],
+  imports: [AuthModule, UserModule, PrismaModule, ReportModule, FeedbackModule, AdminModule, GameModule, GameAssetsModule],
   controllers: [AppController],
   providers: [AppService],
 })
