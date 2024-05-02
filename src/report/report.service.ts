@@ -1,14 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { reportDto } from './DTO/report.dto';
+import { Request } from 'express';
+import { Auth, User } from '@prisma/client';
 
 @Injectable()
 export class ReportService {
     constructor(private prisma:PrismaService){}
 
-    async CreateReport(userId:string ,reportDto:reportDto){
+    async CreateReport(request:Request ,reportDto:reportDto){
         const {reportTitle,reportDescription} = reportDto;
         try{
+            const userId = (request.user as Auth).authId;
             const reportCreated = await this.prisma.report.create({
                 data:{
                     userId:userId,

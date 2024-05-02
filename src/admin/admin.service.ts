@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; 
-import { User } from '@prisma/client';
+import { Auth, User } from '@prisma/client';
 import { AuthService } from '../auth/auth.service';
 import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util';
-
+import { Role } from '../enum/role.enum';
 @Injectable()
 export class AdminService {
     constructor(private prisma:PrismaService,private authService:AuthService){}
@@ -24,17 +24,48 @@ export class AdminService {
             throw Error('Failed to get all users')
         }
     }
+    async  promoteUserToAdmin(userId: string):Promise<Auth|null>{
+        try{
+            return this.prisma.auth.update({
+                where:{
+                    authId: userId
+                },
+                data:{
+                    role:Role.ADMIN
+                }
+            })
+            
+        }catch(Error){
+            throw Error('failed to promote user')
+        }
+    }
 
     async getAllReports(){
         try{
-            return this.prisma.report.findMany()
+            return this.prisma.report.findMany(
+                {
+                    where:{
+                        isDeleted:false,
+                        user:{
+                            isDeleted:false
+                        }
+                    }
+                }
+            )
         }catch(Error){
             throw Error('Failed to get all reports')
         }
     }
     async getAllFeedbacks(){
         try{
-            return this.prisma.feedback.findMany()
+            return this.prisma.feedback.findMany({
+                where:{
+                    isDeleted:false,
+                    user:{
+                        isDeleted:false
+                    }
+                }
+            })
         }catch(Error){
             throw Error('Failed to get all feedbacks')
         }   
