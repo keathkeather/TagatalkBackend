@@ -34,7 +34,7 @@ export class AuthController {
     }
     @Put('changePassword')
     @UseGuards(JwtAuthGuard)
-    async changePassowrd(@Req() req:Request ,@Body() newPassword:string){
+    async changePassowrd(@Req() req:Request ,@Body('newPassword') newPassword:string){
         return this.authService.changePassword(req,newPassword)
         
        

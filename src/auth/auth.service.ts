@@ -97,7 +97,7 @@ export class AuthService {
     async validateUser( email:string, password:string): Promise<String | null> {
         
 
-        //* Find the user through emal
+        //* Find the user through emal  
         const user = await this.findByEmail(email);
         //* if user is nto found throw an Error 
         if (!user) {
@@ -144,26 +144,30 @@ export class AuthService {
       }
       async changePassword(request:Request, newPassword:string):Promise<Auth|null>{
         try{
-          const userEmail = (request.user as Auth).email
-          console.log(userEmail)
+          const userEmail = (request.user as Auth).email;
+          const user = await this.findByEmail(userEmail);
           
-          const user = await this.findByEmail(userEmail)
           if(!user){
-            throw new BadRequestException('User not found')
+            throw new BadRequestException('User not found');
           }
-          const newEncryptedPassword = await this.encryptPassword(newPassword)
-          return await this.prisma.auth.update({
+          
+          console.log(newPassword)
+          const saltedPassword = (newPassword as string) + process.env.SALT;
+          const newEncryptedPassword = await bcrypt.hash(saltedPassword, 10);
+      
+          const updatedUser = await this.prisma.auth.update({
             where:{
               authId: user.authId
             },
             data:{
-              encrypted_password:newEncryptedPassword
+              encrypted_password: newEncryptedPassword
             }
-          })
-          
-        }catch(err){
-          console.log(err)
-          throw new UnauthorizedException('Failed to change password')
+          });
+      
+          return updatedUser;
+        } catch (err) {
+          console.error(err);
+          return null;
         }
       }
    
