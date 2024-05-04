@@ -49,6 +49,13 @@ export class AdminService {
                         user:{
                             isDeleted:false
                         }
+                    },
+                    include:{
+                        user:{
+                            select:{
+                                email:true
+                            }
+                        }
                     }
                 }
             )
@@ -64,7 +71,15 @@ export class AdminService {
                     user:{
                         isDeleted:false
                     }
+                },
+                include:{
+                    user:{
+                        select:{
+                            email:true
+                        }
+                    }
                 }
+                
             })
         }catch(Error){
             throw Error('Failed to get all feedbacks')
