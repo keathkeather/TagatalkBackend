@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { AdminService } from './admin.service';
 
 @Controller('admin')
@@ -77,6 +77,10 @@ export class AdminController {
     @Put('promoteUserToAdmin/:authId')
     async promoteUserToAdmin(@Param('authId') authId:string){
         return this.adminService.promoteUserToAdmin(authId);
+    }
+    @Post('unban-users')
+    async unbanUsers() {
+        return  this.adminService.handleUserUnban();
     }
 
 

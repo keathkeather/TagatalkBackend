@@ -17,7 +17,7 @@ export class AdminService {
                     auth:{
                         banned_until:null
                     }
-                }
+                },
             }
             )
         }catch(Error){
@@ -148,6 +148,13 @@ export class AdminService {
                     }
                   },
                 },
+                include:{
+                    auth:{
+                        select:{
+                            banned_until:true
+                        }
+                    }
+                }
               });
         }catch(Error){
             throw Error('Failed to get all banned users')
@@ -308,5 +315,32 @@ export class AdminService {
             throw Error('Failed to restore feedback')
         }
     }
+    async handleUserUnban() {
+        try{
+            const currentDate = new Date();
+            const users = await this.prisma.auth.findMany({
+                where: {
+                    banned_until: {
+                        lte: currentDate
+                    }
+                }
+            });
+        
+            const unbanPromises = users.map(user => this.prisma.auth.update({
+                where: {
+                    authId: user.authId
+                },
+                data: {
+                    banned_until: null
+                }
+            }));
+        
+            await Promise.all(unbanPromises);
+        }catch(Error){
+            console.log(Error)
+            throw Error;
+        }
+    }
 
 }
+
