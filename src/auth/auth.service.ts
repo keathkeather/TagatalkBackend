@@ -170,6 +170,15 @@ export class AuthService {
           return null;
         }
       }
+      async validateToken(request:Request){
+        console.log(request);
+        const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1]);
+        console.log(decoded);
+        
+      }
+      async refreshToken(request:Request):Promise<string|null>{
+       return; 
+      }
    
 
 }

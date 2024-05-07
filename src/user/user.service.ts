@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; 
-import { User } from '@prisma/client';
+import { Auth, User } from '@prisma/client';
+import { Request } from 'express';
+import { AuthService } from '../auth/auth.service';
 @Injectable()
 export class UserService {
-    constructor(private prisma:PrismaService){}
+    constructor(private prisma:PrismaService, private authService:AuthService){}
     async getAllUser():Promise<User[]|null>{
         try{
             return this.prisma.user.findMany();
@@ -38,10 +40,25 @@ export class UserService {
             throw new Error('failed to get user by email')
         }
     }
-    async createUserProgress(userId:string,gameId:string){
-        
+    async addUserName(request:Request,username: string){
+        try{
+            console.log(username)
+            const userEmail = (request.user as User).email;
+            
+            const user = await  this.authService.findByEmail(userEmail);
+            console.log(user)
+            return this.prisma.user.update({
+                where:{
+                    userId:user.authId
+                },
+                data:{
+                    name:username
+                }
+            })
+        } catch(error) {
+            console.log(error.stack)
+            throw new Error('Failed to create user name');
+        }
     }
-
-
 
 }
