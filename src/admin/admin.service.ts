@@ -53,6 +53,7 @@ export class AdminService {
                     include:{
                         user:{
                             select:{
+                                name:true,
                                 email:true
                             }
                         }
@@ -75,6 +76,7 @@ export class AdminService {
                 include:{
                     user:{
                         select:{
+                            name:true,
                             email:true
                         }
                     }
