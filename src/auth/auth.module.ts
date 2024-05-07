@@ -6,17 +6,18 @@ import { PrismaService } from '../prisma/prisma.service';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
+import { GoogleStrategy } from './utils/GoogleStrategy';
 
 
 @Module({
   imports:[
     PassportModule,
     JwtModule.register({
-      secret: process.env.SECRET_KEY,
+      secret: "zqmjcwXH2ebEvJxgA6VJtbcK83dvQjeY",
       signOptions:{expiresIn:'1h'}
     })
   ],
-  providers: [AuthService,PrismaService,JwtStrategy,LocalStrategy],
+  providers: [AuthService,PrismaService,JwtStrategy,LocalStrategy, GoogleStrategy],
   controllers: [AuthController]
 })
 export class AuthModule {}

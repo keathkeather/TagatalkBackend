@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("TESTING_DATABASE_URL")
+  url      = "postgresql://Tagatalk_owner:yJCfd8LsES4X@ep-still-wind-a1saujtl-pooler.ap-southeast-1.aws.neon.tech/Tagatalk?sslmode=require"
 }
 
 

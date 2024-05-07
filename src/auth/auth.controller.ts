@@ -5,6 +5,7 @@ import { Auth } from '@prisma/client';
 import { LocalGuard } from './guards/local.guard';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { Request } from 'express';
+import { GoogleAuthGuard } from './utils/GoogleGuards';
 @Controller('auth')
 export class AuthController {
 
@@ -31,4 +32,19 @@ export class AuthController {
         return req.user
     }
 
+
+    @Get('google/login')
+    @UseGuards(GoogleAuthGuard)
+    handlegooglelogin(){
+        return {msg: 'Google Authentication'}
+
+    }
+
+    @Get('google/redirect')
+    @UseGuards(GoogleAuthGuard)
+    handleRedirect(){
+        return {msg: "Ok"}
+
+    }
+  
 }
