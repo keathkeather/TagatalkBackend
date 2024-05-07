@@ -286,6 +286,8 @@ model User {
   auth         Auth    @relation(fields: [userId], references: [authId])
   email        String   @unique
   name         String?
+  profileImage String?
+  profileDescription String?
   userStreak   Int      @default(0)
   isDeleted    Boolean  @default(false)
   createdAt    DateTime @default(now())
@@ -312,6 +314,7 @@ model Game {
   id String @id @default(uuid()) @db.Uuid
   gameName String 
   gameType String
+  gameChapter String
   gameLevel Int
   gameValue Int
   isDeleted    Boolean  @default(false)
