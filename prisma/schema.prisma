@@ -313,8 +313,10 @@ model User_Progress {
 model Game {
   id String @id @default(uuid()) @db.Uuid
   gameName String 
+  gameUnitName String
+  gameUnitNumber Int 
+  gameLesson Int
   gameType String
-  gameChapter String
   gameLevel Int
   gameValue Int
   isDeleted    Boolean  @default(false)

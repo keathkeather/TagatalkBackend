@@ -52,5 +52,9 @@ export class AuthController {
     async verifyToken(@Req() req:Request){
         return this.authService.validateToken(req)
     }
+    @Post('refreshToken')
+    async refreshToken(@Req() req:Request){
+        return this.authService.refreshToken(req)
+    }
 
 }
