@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './DTO/register.dto';
 import { Auth, User } from '@prisma/client';
@@ -67,7 +67,7 @@ export class AuthController {
 
     @Get('google/redirect')
     @UseGuards(GoogleAuthGuard)
-    handleRedirect(){
+    async handleRedirect(){
         return {msg: "Ok"}
 
     }

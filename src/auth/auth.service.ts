@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { loginDto } from './DTO/login.dto';
 import { Role } from './enums/role.enum';
 import { Request } from 'express';
+import { googleUserDTO } from './DTO/googleUser.dto';
 @Injectable()
 export class AuthService {
   //* Find the user through the email (Queries the database for the user with the email provided)
@@ -70,7 +71,7 @@ export class AuthService {
   }
   constructor(private prisma: PrismaService,private jwtService:JwtService) {}
     
-    async RegisterUser(registerDto: RegisterDto): Promise<Auth> {
+  async RegisterUser(registerDto: RegisterDto): Promise<Auth> {
         const { email, password } = registerDto;
         if (!email || !password) {
             throw new BadRequestException('Email and password are required');
@@ -93,10 +94,29 @@ export class AuthService {
             throw new BadRequestException('Failed to register user');
         }
     }
+
+    async registerGoogleUser(googleUserDTo: googleUserDTO){
+      
+      const google =  googleUserDTo
+
+      try {
+        const newGoogleUser = await this.prisma.auth.create({
+          data:{
+            email: google.email,
+          }
+        })
+        console.log(google.email)
+        return newGoogleUser;
+
+      }catch (error) {
+        console.log(error);
+        throw new BadRequestException('Failed to register user');
+      }
+    
+    }
+  
     //* Validate user credentials with promise of a sttring(token)
     async validateUser( email:string, password:string): Promise<String | null> {
-        
-
         //* Find the user through emal  
         const user = await this.findByEmail(email);
         //* if user is nto found throw an Error 
@@ -114,6 +134,34 @@ export class AuthService {
         } catch (error) {
           console.log(error);
           throw new InternalServerErrorException('Failed to validate user');
+        }
+      }
+
+      async validateGoogleUser( googleAccessToken:string, googleUserDTO: googleUserDTO ): Promise<String | null> {
+        try {
+          if (!googleAccessToken) {
+            throw new BadRequestException('No access token provided')
+          }
+
+          const user = googleUserDTO
+          const email = this.findAdminByEmail(user.email)
+
+          if(!user){
+            this.registerGoogleUser(user)
+            return this.jwtService.sign({ email: email ,role:user.role}); //* Signs the token with the email and role of the user
+          }
+
+
+          console.log(user);
+          console.log("user Email")
+          console.log(user.email)
+          const jwtToken =  this.jwtService.sign({ email: email ,role:user.role}); 
+          console.log(jwtToken)
+          return jwtToken;//* Signs the token with the email and role of the user
+
+        } catch (error) {
+          console.log(error);
+          throw new InternalServerErrorException('Failed to verify google User');
         }
       }
 

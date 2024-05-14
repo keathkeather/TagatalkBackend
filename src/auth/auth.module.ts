@@ -7,17 +7,18 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { GoogleStrategy } from './utils/GoogleStrategy';
+import { SessionSerializer } from './utils/Serializer';
 
 
 @Module({
   imports:[
     PassportModule,
     JwtModule.register({
-      secret: "zqmjcwXH2ebEvJxgA6VJtbcK83dvQjeY",
+      secret: process.env.SECRECT_KEY,
       signOptions:{expiresIn:'1h'}
     })
   ],
-  providers: [AuthService,PrismaService,JwtStrategy,LocalStrategy, GoogleStrategy],
+  providers: [AuthService,PrismaService,JwtStrategy,LocalStrategy, GoogleStrategy, SessionSerializer],
   controllers: [AuthController]
 })
 export class AuthModule {}

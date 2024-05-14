@@ -9,9 +9,10 @@ import { FeedbackModule } from './feedback/feedback.module';
 import { AdminModule } from './admin/admin.module';
 import { GameModule } from './game/game.module';
 import { GameAssetsModule } from './game-assets/game-assets.module';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
-  imports: [AuthModule, UserModule, PrismaModule, ReportModule, FeedbackModule, AdminModule, GameModule, GameAssetsModule],
+  imports: [AuthModule, UserModule, PrismaModule, ReportModule, FeedbackModule, AdminModule, GameModule, GameAssetsModule, PassportModule.register({session: true}),],
   controllers: [AppController],
   providers: [AppService],
 })
