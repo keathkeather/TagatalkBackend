@@ -77,7 +77,7 @@ export class AuthService {
             throw new BadRequestException('Email and password are required');
         }
         
-        const saltedPassword = password + "ILOVEPOKEMON" //* Add the  salt to the password
+        const saltedPassword = password + process.env.SALT //* Add the  salt to the password
         const hashedPassword = await bcrypt.hash(saltedPassword, 10); //* Hash the password with the salt
      
         try {
@@ -124,7 +124,7 @@ export class AuthService {
           throw new BadRequestException('user not found');
         }
         try {
-          const saltedPassword = password+"ILOVEPOKEMON"; //* Add the salt to the password
+          const saltedPassword = password+process.env.SALT; //* Add the salt to the password
           const match = await bcrypt.compare(saltedPassword, user.encrypted_password); //* Compare the password with the encrypted password
           if (match) {
             return this.jwtService.sign({ email: user.email ,role:user.role,authId: user.authId}); //* Signs the token with the email and role of the user
@@ -173,7 +173,7 @@ export class AuthService {
           throw new BadRequestException('user not found')
         } 
         try{
-          const saltedPassword= password+"ILOVEPOKEMON"; //*Add the salt to the password
+          const saltedPassword= password+process.env.SALT; //*Add the salt to the password
           const match= await bcrypt.compare(saltedPassword, user.encrypted_password); //* Compare the password wit the encrypted password
           if(match){
             
