@@ -60,5 +60,8 @@ export class UserService {
             throw new Error('Failed to create user name');
         }
     }
+    async editUserProfile(request:Request,username:string, profilePic:string){
+        
+    }
 
 }
