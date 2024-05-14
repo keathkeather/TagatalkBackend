@@ -218,14 +218,42 @@ export class AuthService {
           return null;
         }
       }
-      async validateToken(request:Request){
-        console.log(request);
-        const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1]);
-        console.log(decoded);
+      async validateToken(request:Request):Promise<string|null>{
+        // console.log(request);
+        try{
+          const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1]);
+          console.log(decoded)
+          return decoded;
+        }catch(error){
+          if(error instanceof TokenExpiredError){
+            console.log('Token Expired')
+            throw new UnauthorizedException('Token Expired')
+          }else if(error instanceof JsonWebTokenError){
+            console.log('Invalid Token')
+            throw new UnauthorizedException('Invalid Token')
+          }
+        }
         
       }
       async refreshToken(request:Request):Promise<string|null>{
-       return; 
+        
+        try{
+          const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1]);
+          console.log(decoded);
+          return this.jwtService.sign({email:decoded.email,role:decoded.role,authId:decoded.authId})
+        }catch(error){
+          if(error instanceof TokenExpiredError){
+            console.log('Token Expired')
+            console.trace()
+            throw new UnauthorizedException('Token Expired')
+          }else if(error instanceof JsonWebTokenError){
+            console.log('Invalid Token')
+            throw new UnauthorizedException('Invalid token signature')
+          }
+          
+        }
+        
+      
       }
    
 
