@@ -1,12 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GameController } from './game.controller';
+import { GameService } from './game.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 describe('GameController', () => {
   let controller: GameController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [GameController],
+      controllers: [GameController],providers:[GameService,PrismaService]
     }).compile();
 
     controller = module.get<GameController>(GameController);
