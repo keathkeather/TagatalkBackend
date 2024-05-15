@@ -131,6 +131,18 @@ export class UserService {
         if(!user){
             throw new Error('User not found')
         }
+
+        if(user.profileImage === null){
+            const userDTO: userDto={
+                userId:user.userId,
+                email:user.email,
+                name:user.name,
+                profileImage:null,
+                profileDescription:user.profileDescription
+            }
+            return userDTO;
+        }
+
         const getObjectParams = {
             Bucket: process.env.AWS_PROFILE_BUCKET_NAME,
             Key: user.profileImage,
