@@ -29,12 +29,12 @@ export class UserController {
 
     @Put('editUser')
     @UseGuards(JwtAuthGuard)
-    @UseInterceptors(FileInterceptor('Profile'))
-    async editUser(@UploadedFile(new ParseFilePipe({
-        validators:[
-            new MaxFileSizeValidator({ maxSize: 2097152 }), 
-        ],
-    }),) Files,@Req() request:Request, @Body('name') username:string , @Body('profileDescription') profileDescription:string ){
+    @UseInterceptors(FileInterceptor('Profile', {
+        limits: {
+          fileSize: 2 * 1024 * 1024, // 2MB
+        },
+      }))
+    async editUser(@UploadedFile() Files,@Req() request:Request, @Body('name') username:string , @Body('profileDescription') profileDescription:string ){
         return await this.userService.editUserProfile(Files,request,username,profileDescription)
     
     }

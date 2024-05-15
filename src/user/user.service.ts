@@ -82,43 +82,62 @@ export class UserService {
         try{
             const userId = (request.user as Auth).authId;
             const user =  await this.getUserById(userId)    
-            if (!file) {
-                throw new Error('No file uploaded');
-            }
-            if (user.profileImage) {
-                await this.s3.send(new DeleteObjectCommand({
-                    Bucket: process.env.AWS_PROFILE_BUCKET_NAME,
-                    Key: user.profileImage,
-                }));
-            }
-            const succesful = await this.s3.send(new PutObjectCommand({
-                Bucket:process.env.AWS_PROFILE_BUCKET_NAME,
-                Key:`profilePictures/${user.userId}/${file.originalname}`,
-                Body:file.buffer,
-                ContentDisposition: 'inline',
-                ContentType: 'image/jpeg'
-            }))
-            if(succesful){
+          
+            if(file){
+                if (user.profileImage) {
+                    await this.s3.send(new DeleteObjectCommand({
+                        Bucket: process.env.AWS_PROFILE_BUCKET_NAME,
+                        Key: user.profileImage,
+                    }));
+                }
+                const succesful = await this.s3.send(new PutObjectCommand({
+                    Bucket:process.env.AWS_PROFILE_BUCKET_NAME,
+                    Key:`profilePictures/${user.userId}/${file.originalname}`,
+                    Body:file.buffer,
+                    ContentDisposition: 'inline',
+                    ContentType: 'image/jpeg'
+                }))
+                if(succesful){
+                    const updateData: any = {};
+                
+                        if (username) {
+                            updateData.name = username;
+                        }
+                
+                        if (profileDescription) {
+                            updateData.profileDescription = profileDescription;
+                        }
+                
+                        updateData.profileImage = `profilePictures/${user.userId}/${file.originalname}`;
+                
+                        return this.prisma.user.update({
+                            where:{
+                                userId:user.userId
+                            },
+                            data: updateData
+                        })
+                }
+            }else{
                 const updateData: any = {};
-            
-                    if (username) {
-                        updateData.name = username;
-                    }
-            
-                    if (profileDescription) {
-                        updateData.profileDescription = profileDescription;
-                    }
-            
-                    updateData.profileImage = `profilePictures/${user.userId}/${file.originalname}`;
-            
-                    return this.prisma.user.update({
-                        where:{
-                            userId:user.userId
-                        },
-                        data: updateData
-                    })
-    
+                
+                        if (username) {
+                            updateData.name = username;
+                        }
+                
+                        if (profileDescription) {
+                            updateData.profileDescription = profileDescription;
+                        }
+                
+                        updateData.profileImage = user.profileImage;
+                
+                        return this.prisma.user.update({
+                            where:{
+                                userId:user.userId
+                            },
+                            data: updateData
+                        })
             }
+
         }catch(error){
             console.log(error.stack)
             throw new Error('Failed to edit user profile')
