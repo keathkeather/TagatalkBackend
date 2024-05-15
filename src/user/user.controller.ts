@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, FileTypeValidator, Get, MaxFileSizeValidator, Param, ParseFilePipe, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
 @Controller('user')
 export class UserController {
     constructor(private userService: UserService){}
@@ -25,4 +26,23 @@ export class UserController {
         return this.userService.addUserName(request, username);
     
     }
+
+    @Put('editUser')
+    @UseGuards(JwtAuthGuard)
+    @UseInterceptors(FileInterceptor('Profile'))
+    async editUser(@UploadedFile(new ParseFilePipe({
+        validators:[
+            new MaxFileSizeValidator({ maxSize: 2097152 }), 
+        ],
+    }),) Files,@Req() request:Request, @Body('name') username:string , @Body('profileDescription') profileDescription:string ){
+        return await this.userService.editUserProfile(Files,request,username,profileDescription)
+    
+    }
+
+    @Get('getUserData')
+    @UseGuards(JwtAuthGuard)
+    async getUserData(@Req() request:Request){
+        return this.userService.getUserData(request);
+    }
+
 }

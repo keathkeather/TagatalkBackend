@@ -87,6 +87,14 @@ export class AuthService {
                     
                 },
             });
+            const username = email.split('@')[0];
+            await this.prisma.user.update({
+              where:{
+                userId:newUser.authId
+              },data:{
+                name : username
+              }
+            })
             return newUser;
         } catch (error) {
             console.log(error);
