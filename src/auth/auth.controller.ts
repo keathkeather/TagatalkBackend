@@ -47,10 +47,10 @@ export class AuthController {
     async changePassowrd(@Req() req:Request ,@Body('newPassword') newPassword:string){
         return this.authService.changePassword(req,newPassword)
     }
-    @Post('verifyToken')
-    // @UseGuards(JwtAuthGuard)
-    async verifyToken(@Req() req:Request){
-        return this.authService.validateToken(req)
+    @Post('refreshToken')
+    @UseGuards(JwtAuthGuard)
+    async refreshToken(@Req() req:Request){
+        return this.authService.refreshToken(req)
     }
 
 }
