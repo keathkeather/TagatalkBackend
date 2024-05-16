@@ -152,7 +152,8 @@ export class AuthService {
       }
       async changePassword(request:Request, newPassword:string):Promise<Auth|null>{
         try{
-          const userEmail = (request.user as Auth).email;
+          const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1]);
+          const userEmail = decoded.email;
           const user = await this.findByEmail(userEmail);
           
           if(!user){
@@ -178,14 +179,15 @@ export class AuthService {
           return null;
         }
       }
-      async validateToken(request:Request){
-        console.log(request);
-        const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1]);
-        console.log(decoded);
-        
-      }
+ 
       async refreshToken(request:Request):Promise<string|null>{
-       return; 
+        try{
+          const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1]);
+          return this.jwtService.sign({email:decoded.email,role:decoded.role,authId:decoded.authId})
+        }catch(error){
+          console.log(error)
+          throw new UnauthorizedException('Invalid token')
+        } 
       }
    
 
