@@ -145,8 +145,8 @@ export class UserService {
     }
     //TODO getUSER DATA using jwt token and return user dtothrough dto make sure profilePicture link is active url
     async getUserData(request:Request){
-        const userId = (request.user as Auth).authId;
-        const user =  await this.getUserById(userId)  
+        const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1]);
+        const user = await this.getUserById(decoded.authId); 
         if(!user){
             throw new Error('User not found')
         }

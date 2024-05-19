@@ -106,9 +106,7 @@ export class GameAssetsService {
           throw new InternalServerErrorException('Failed to get game asset');
         }
       }
-    // async getGameAssets(){
 
-    // }
     async updateGameAsset(){
 
     }

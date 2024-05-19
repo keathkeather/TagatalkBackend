@@ -244,7 +244,7 @@ model Auth {
   encrypted_password          String?       @db.VarChar()
   email_confirmed_at          DateTime?     @db.Timestamptz(6)
   invited_at                  DateTime?     @db.Timestamptz(6)
-  confirmation_token          String?       @db.VarChar(255)
+  confirmation_token          String?       @unique @db.VarChar(255)
   confirmation_sent_at        DateTime?     @db.Timestamptz(6)
   recovery_token              String?       @db.VarChar(255)
   recovery_sent_at            DateTime?     @db.Timestamptz(6)

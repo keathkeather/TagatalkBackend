@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './DTO/register.dto';
 import { Auth, User } from '@prisma/client';
@@ -42,15 +42,13 @@ export class AuthController {
     async loginAdmin(@Req() req:Request){
         return req.user
     }
-    @Put('changePassword')
-    @UseGuards(JwtAuthGuard)
-    async changePassowrd(@Req() req:Request ,@Body('newPassword') newPassword:string){
-        return this.authService.changePassword(req,newPassword)
-    }
-    @Post('verifyToken')
-    // @UseGuards(JwtAuthGuard)
-    async verifyToken(@Req() req:Request){
-        return this.authService.validateToken(req)
+    @Get('verify/:token')
+    async verify(@Param('token') token: string) {
+        const result = await this.authService.verifyEmail(token);
+        if (result!==null) {
+            return 'Email verified successfully';
+        }
+
     }
 
 }
