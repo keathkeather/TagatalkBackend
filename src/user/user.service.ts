@@ -8,6 +8,7 @@ import { DeleteObjectCommand, GetObjectCommand, GetObjectCommandOutput, PutObjec
 import { userDto } from './DTO/user.dto';
 import { S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
 @Injectable()
 export class UserService {
     constructor(private prisma:PrismaService, private authService:AuthService,private jwtService:JwtService){}
@@ -145,7 +146,8 @@ export class UserService {
     }
     //TODO getUSER DATA using jwt token and return user dtothrough dto make sure profilePicture link is active url
     async getUserData(request:Request){
-        const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1]);
+        console.log(request.headers['authorization'].split(' ')[1])
+        const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
         const user = await this.getUserById(decoded.authId); 
         if(!user){
             throw new Error('User not found')

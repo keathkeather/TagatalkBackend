@@ -3,9 +3,16 @@ import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { PrismaService } from '../prisma/prisma.service'; 
 import { AuthService } from '../auth/auth.service';
-import { JwtService } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { MailerService } from 'src/mailer/mailer.service';
-@Module({
+import { PassportModule } from '@nestjs/passport';
+@Module({imports:[
+    PassportModule,
+    JwtModule.register({
+      secret: process.env.SECRET_KEY,
+      signOptions:{expiresIn:'1h'}
+    })
+  ],
   providers: [UserService,PrismaService,AuthService,JwtService,MailerService],
   controllers: [UserController]
 })
