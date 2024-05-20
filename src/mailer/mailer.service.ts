@@ -23,5 +23,12 @@ export class MailerService {
           html: `Click <a href="${url}">here</a> to verify your email.`,
         });
       }
+      async sendOTPCOde(email: string, otp: string) {
+        await this.transporter.sendMail({
+          to: email,
+          subject: 'OTP Verification',
+          html: `Your OTP is ${otp}`,
+        });
+      }
     
 }
