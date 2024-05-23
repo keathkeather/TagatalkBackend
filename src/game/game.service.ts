@@ -129,4 +129,19 @@ export class GameService {
             throw new InternalServerErrorException('Error fetching all games')
         }
     }
+    async updateGameType(){
+        const game = await this.prisma.game.updateMany({
+            where:{
+                gameType:"Question Type"
+            },
+            data:{
+                gameType:"Read and Respond"
+            }
+        })
+        if(!game){
+            throw new InternalServerErrorException('Error updating games')
+        }
+        return game;
+    }
+
 }

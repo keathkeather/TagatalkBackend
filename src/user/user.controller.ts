@@ -63,5 +63,11 @@ export class UserController {
     async getAllGamesForCourseTree(@Req() request:Request, @Param('gameSkill') gameSkill:string){
         return this.userService.getUserCourseTree(request,gameSkill)
     }
+    @Get('getLesson/:gameSkill')
+    @UseGuards(JwtAuthGuard)
+    async getUserLessons(@Req() request:Request, @Param('gameSkill') gameSkill:string){
+        return this.userService.getUserGamesPerLesson(request,gameSkill)
+    }
+   
 
 }

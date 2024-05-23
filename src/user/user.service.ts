@@ -189,8 +189,6 @@ export class UserService {
             const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
             const user = await this.getUserById(decoded.authId); 
             const game = await this.gameService.getGameByID(gameID)
-            console.log(user)
-            console.log(game)
            
             if(!user){
                throw new UnauthorizedException('user not authorized')
@@ -199,22 +197,41 @@ export class UserService {
                 res.status(404).json({message:'game not found'})
             }
             
-            const userProgress = await this.prisma.user_Progress.create({
-                data:{
-                    userId:user.userId,
-                    gameId:game.id,
-                    isCompleted:true
+            // Check if the user has already completed the game
+            const existingProgress = await this.prisma.user_Progress.findFirst({
+              where: {
+                userId: user.userId,
+                gameId: game.id,
+                isCompleted: true
+              }
+            });
+    
+            // If the user has already completed the game, return
+            if (existingProgress) {
+              return;
+            }
+    
+            const userProgress = await this.prisma.user_Progress.updateMany({
+                where: {
+                  userId: user.userId,
+                  gameId: game.id
+                },
+                data: {
+                  isCompleted: true
                 }
-            })
-            console.log(userProgress)
+              });
+    
             if(!userProgress){
                 throw new Error('error in adding new progress')
             }
             res.status(200).json({
-                message: 'user progress added',
+              message: 'Progress added successfully'
             });
-        }catch(error){
-            console.log(error)
+        } catch (error) {
+            res.status(500).json({
+              message: 'An error occurred',
+              error: error.message
+            });
         }
     }
     // async getGameProgress(request:Request, response:Res)
@@ -279,57 +296,136 @@ export class UserService {
           throw new InternalServerErrorException('Failed to get games for user');
         }
       }
-    async getUserCourseTree(request:Request,gameSkill:string){
-        try{
-          const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
-          const user = await this.getUserById(decoded.authId); 
-          const latestCompletedGame = await this.prisma.user_Progress.findFirst({
+      async getUserCourseTree(request: Request, gameSkill: string) {
+        try {
+            const token = request.headers['authorization'].split(' ')[1];
+            const decoded = this.jwtService.verify(token, { secret: process.env.SECRET_KEY });
+            const user = await this.getUserById(decoded.authId);
+    
+            // Fetch the latest completed game for the user
+            const latestCompletedGame = await this.prisma.user_Progress.findFirst({
+                where: {
+                    userId: user.userId,
+                    isCompleted: true
+                },
+                orderBy: {
+                    game: {
+                        gameUnitNumber: 'desc'
+                    }
+                },
+                include: {
+                    game: true
+                }
+            });
+    
+            // If the user hasn't completed any games, start with unit 1
+            const nextUnitNumber = latestCompletedGame ? latestCompletedGame.game.gameUnitNumber + 1 : 1;
+    
+            // Fetch games up to the next unit number
+            const games = await this.prisma.game.findMany({
+                where: {
+                    gameUnitNumber: {
+                        lte: nextUnitNumber
+                    },
+                    gameSkill: gameSkill
+                },
+                orderBy: {
+                    gameLessonNumber: 'asc'
+                },
+                include: {
+                    userProgress: true
+                }
+            });
+    
+            const courseTree = {};
+    
+            // Organize games into a course tree
+            games.forEach(game => {
+                if (!courseTree[game.gameUnitNumber]) {
+                    courseTree[game.gameUnitNumber] = {
+                        games: [],
+                        isCompleted: true
+                    };
+                }
+    
+                courseTree[game.gameUnitNumber].games.push(game);
+    
+                const userProgress = game.userProgress.find(progress => progress.userId === user.userId);
+                if (!userProgress || !userProgress.isCompleted) {
+                    courseTree[game.gameUnitNumber].isCompleted = false;
+                }
+            });
+    
+            // Create course tree DTOs
+            const courseTreeDTOs = [];
+            for (const unitNumber in courseTree) {
+                const unitGames = courseTree[unitNumber].games;
+                const isCompleted = courseTree[unitNumber].isCompleted;
+    
+                unitGames.forEach(game => {
+                    courseTreeDTOs.push({
+                        gameUnit: game.gameUnit,
+                        gameUnitNumber: game.gameUnitNumber,
+                        gameLesson: game.gameLesson,
+                        gameLessonNumber: game.gameLessonNumber,
+                        isCompleted: isCompleted
+                    });
+                });
+            }
+    
+            return courseTreeDTOs;
+        } catch (error) {
+            console.error('Error fetching games for user:', error);
+            throw new InternalServerErrorException('Failed to get games for user');
+        }
+    }
+      async getUserGamesPerLesson(request: Request, gameSkill: string) {
+        try {
+          const token = request.headers['authorization'].split(' ')[1];
+          const decoded = this.jwtService.verify(token, { secret: process.env.SECRET_KEY });
+          const user = await this.getUserById(decoded.authId);
+      
+          // Fetch all completed games for the user
+          const completedGames = await this.prisma.user_Progress.findMany({
             where: {
               userId: user.userId,
               isCompleted: true
-            },
-            orderBy: {
-              game: {
-                gameUnitNumber: 'desc'
-              }
             },
             include: {
               game: true
             }
           });
       
-          // If the user hasn't completed any games, start with unit 1
-          const nextUnitNumber = latestCompletedGame ? latestCompletedGame.game.gameUnitNumber + 1 : 1;
+          // Find the highest completed game unit number
+          const highestCompletedUnitNumber = completedGames.length > 0
+            ? Math.max(...completedGames.map(cg => cg.game.gameUnitNumber))
+            : 0;
       
-          // Fetch the first game for each gameLessonNumber up to the next unit number
-          const games = await this.prisma.game.findMany({
+          const nextUnitNumber = highestCompletedUnitNumber + 1;
+      
+          // Fetch games for the next unit to be completed
+          const nextUnitGames = await this.prisma.game.findMany({
             where: {
-              gameUnitNumber: {
-                lte: nextUnitNumber
-              }
+              gameUnitNumber: nextUnitNumber,
+              gameSkill: gameSkill
             },
             orderBy: {
               gameLessonNumber: 'asc'
-            },
-            distinct: ['gameLessonNumber']
+            }
           });
       
-          const courTreeDTOs = games.map(game => new courTreeDTO({
-            gameUnit: game.gameUnit,
-            gameUnitNumber: game.gameUnitNumber,
-            gameLesson: game.gameLesson,
-            gameLessonNumber: game.gameLessonNumber
-          }));
+          // Combine the results: completed games and next unit games
+          const combinedGames = [
+            ...completedGames.map(cg => cg.game),
+            ...nextUnitGames
+          ];
       
-          return courTreeDTOs;
+          return combinedGames;
         } catch (error) {
           console.error('Error fetching games for user:', error);
           throw new InternalServerErrorException('Failed to get games for user');
         }
       }
-       
-    
-    
-    
+      
 }
 
