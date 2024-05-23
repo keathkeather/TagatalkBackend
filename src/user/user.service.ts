@@ -1,17 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; 
-import { Auth, User } from '@prisma/client';
-import { Request } from 'express';
+import { Auth, User,Game,User_Progress } from '@prisma/client';
+import { Request,Response } from 'express';
 import { AuthService } from '../auth/auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { DeleteObjectCommand, GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, S3 } from '@aws-sdk/client-s3';
 import { userDto } from './DTO/user.dto';
 import { S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { GameService } from '../game/game.service';
 
 @Injectable()
 export class UserService {
-    constructor(private prisma:PrismaService, private authService:AuthService,private jwtService:JwtService){}
+    constructor(private prisma:PrismaService, private authService:AuthService,private jwtService:JwtService,private gameService: GameService){}
 
     private s3 = new S3({
         region: process.env.AWS_S3_REGION,
@@ -182,6 +183,40 @@ export class UserService {
 
         return userDTO;
     }
+    async addUserProgress(request:Request,gameID:string,res:Response){
+        try{
+            const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
+            const user = await this.getUserById(decoded.authId); 
+            const game = await this.gameService.getGameByID(gameID)
+            console.log(user)
+            console.log(game)
+           
+            if(!user){
+               throw new UnauthorizedException('user not authorized')
+            }
+            if(!game){
+                res.status(404).json({message:'game not found'})
+            }
+            
+            const userProgress = await this.prisma.user_Progress.create({
+                data:{
+                    userId:user.userId,
+                    gameId:game.id,
+                    isCompleted:true
+                }
+            })
+            console.log(userProgress)
+            if(!userProgress){
+                throw new Error('error in adding new progress')
+            }
+            res.status(200).json({
+                message: 'user progress added',
+            });
+        }catch(error){
+            console.log(error)
+        }
+    }
+    // async getGameProgress(request:Request, response:Res)
     
 }
 

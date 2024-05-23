@@ -69,6 +69,10 @@ export class AuthController {
     async forgotPassword(@Body('OTP')otp:string, @Body('newPassword') newPassword:string,@Res() Res:Response){
         return this.authService.forgotPassword(otp,newPassword,Res)
     }
+    @Post('resendVerification')
+    async resendVerification(@Body('email') email: string) {
+        return this.authService.resendVerificationCode(email);
+    }
 
     
 

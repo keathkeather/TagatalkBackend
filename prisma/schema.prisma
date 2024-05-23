@@ -312,15 +312,13 @@ model User_Progress {
 
 model Game {
   id String @id @default(uuid()) @db.Uuid
-  gameName String
   gameSkill String 
   gameType String
   gameUnit String
   gameUnitNumber Int
-  gamelesson String
-  gameLesson Int
-  gameLevel Int
-  gameValue Int
+  gameLesson String
+  gameLessonNumber Int 
+  gameValue Int 
   isDeleted    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -335,7 +333,7 @@ model Game_Assets {
   id        String   @id @default(uuid()) @db.Uuid
   game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameId    String   @db.Uuid
-  assetName String    
+  assetName String   
   assetType String
   fileUrl   String
   isDeleted Boolean @default(false)
