@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
 import { GameService } from './game.service';
 import { gameDTO } from './DTO/game.dto';
 @Controller('game')
@@ -10,7 +10,7 @@ export class GameController {
         return this.gameService.createGame(gameDTO);
     }
     @Put('updateGame/:gameId')
-    async updateGame(@Body() gameDTO:gameDTO, @Param('gameId')gameId:string){
+    async updateGame(@Body() gameDTO:gameDTO, @Param('gameId') gameId:string){
         return this.gameService.updateGame(gameId, gameDTO);
     }
     @Get('getAllGames')
@@ -18,8 +18,13 @@ export class GameController {
         return this.gameService.getAllGames();
     }
     @Get('getGameByUnit/:gameUnitNumber')
-    async getGameByUnit(@Param('gameUnitNumber') gameUnitNumber:number){
+    async getGameByUnit(@Param('gameUnitNumber',ParseIntPipe) gameUnitNumber:number){
         return this.gameService.getGameByUnit(gameUnitNumber)
+    }
+    @Get('getGameByLesson/:gameLessonNumber')
+    async getGameByLessonNumber(@Param('gameLessonNumber',ParseIntPipe) gameLessonNumber:number){
+        
+        return this.gameService.getGameByLesson(gameLessonNumber)
     }
 
 }

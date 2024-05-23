@@ -105,20 +105,20 @@ export class GameService {
             throw new InternalServerErrorException('failed to get games')
         }
     }
-    async getGameByUnit(gameUnitNumber: number):Promise<Game[]|null>{
-        try{
-            const games = await this.prisma.game.findMany({
-                where:{
-                    gameUnitNumber:gameUnitNumber
-                }
-            })
-            if(games){
-                return games
+    async getGameByUnit(gameUnitNumber: number): Promise<Game[] | null> {
+        try {
+            if (typeof gameUnitNumber !== 'number') {
+                throw new Error('gameUnitNumber must be a number');
+              }
+          const games = await this.prisma.game.findMany({
+            where: {
+              gameUnitNumber: gameUnitNumber
             }
-            return null
-        }catch(error){
-            console.log(error)
-            throw new InternalServerErrorException('failed to get games')
+          })
+          return games;
+        } catch (error) {
+          console.error('Error fetching games by unit:', error);
+          throw new InternalServerErrorException('Failed to get games by unit');
         }
-    }
+      }
 }
