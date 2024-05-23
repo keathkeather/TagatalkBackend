@@ -1,6 +1,6 @@
-import { Body, Controller, FileTypeValidator, Get, MaxFileSizeValidator, Param, ParseFilePipe, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, FileTypeValidator, Get, MaxFileSizeValidator, Param, ParseFilePipe, Post, Put, Req,Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UserService } from './user.service';
-import { Request } from 'express';
+import { Request,Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 @Controller('user')
@@ -43,6 +43,11 @@ export class UserController {
     @UseGuards(JwtAuthGuard)
     async getUserData(@Req() request:Request){
         return this.userService.getUserData(request);
+    }
+    @Post('addUserProgress')
+    @UseGuards(JwtAuthGuard)
+    async addUserProgress(@Req() request:Request, @Body('gameId') gameId: string,@Res() response:Response){
+        return await this.userService.addUserProgress(request,gameId,response);
     }
 
 }

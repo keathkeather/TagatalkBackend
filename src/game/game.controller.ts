@@ -17,5 +17,9 @@ export class GameController {
     async getAllGames(){
         return this.gameService.getAllGames();
     }
+    @Get('getGameByUnit/:gameUnitNumber')
+    async getGameByUnit(@Param('gameUnitNumber') gameUnitNumber:number){
+        return this.gameService.getGameByUnit(gameUnitNumber)
+    }
 
 }

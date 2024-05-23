@@ -234,6 +234,37 @@ async validateUser( email:string, password:string): Promise<String | null> {
       throw new UnauthorizedException('Invalid token')
     } 
   }
+  async resendVerificationCode(email:string){
+    try{
+      const user = await this.findByEmail(email);
+      console.log(user);
+      if(!user){
+        throw new BadRequestException('Email not found')
+      }
+      if(user.email_confirmed_at){
+        throw new UnauthorizedException('Email already verified')
+      }
+      const emailToken = crypto.randomBytes(20).toString('hex');
+      const updatedUser = await this.prisma.auth.update({
+        where:{
+          authId:user.authId
+        },
+        data:{
+          confirmation_token:emailToken,
+          confirmation_sent_at: new Date()
+        }
+      });
+      if(!updatedUser){
+        throw new InternalServerErrorException('Failed to resend verification code')
+      }
+      await this.mailerService.sendVerificationEmail(email,emailToken)
+    }catch(error){
+      console.log(error)
+      throw new InternalServerErrorException('Failed to resend verification code')
+    }
+  }
+
+
   async requestOTP(email:string){
     try{
       const user = await this.findByEmail(email);
