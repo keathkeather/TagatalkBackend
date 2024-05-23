@@ -26,5 +26,9 @@ export class GameController {
         
         return this.gameService.getGameByLesson(gameLessonNumber)
     }
+    @Put('updateType')
+    async updateType(){
+        return this.gameService.updateGameType()
+    }
 
 }
