@@ -121,4 +121,12 @@ export class GameService {
           throw new InternalServerErrorException('Failed to get games by unit');
         }
       }
+    async getAllGameWithoutAssets(){
+        try{
+            
+        }catch(error){
+            console.log(error)
+            throw new InternalServerErrorException('Error fetching all games')
+        }
+    }
 }
