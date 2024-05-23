@@ -6,4 +6,4 @@ export class gameDTO{
     gameLesson:string;
     gameLessonNumber:number;
     gameValue:number;
-}
+}   
