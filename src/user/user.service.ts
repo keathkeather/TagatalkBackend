@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; 
 import { Auth, User,Game,User_Progress } from '@prisma/client';
 import { Request,Response } from 'express';
@@ -9,6 +9,7 @@ import { userDto } from './DTO/user.dto';
 import { S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { GameService } from '../game/game.service';
+import { courTreeDTO } from './DTO/courseTree.dto';
 
 @Injectable()
 export class UserService {
@@ -217,6 +218,118 @@ export class UserService {
         }
     }
     // async getGameProgress(request:Request, response:Res)
+    async addAllGamesToUserProgress(userId:string){
+        try{
+            const games = await this.gameService.getAllGames();
+            const data = games.map(game=>({
+                userId: userId,
+                gameId: game.id,
+                isCompleted:false
+            }))
+            const succesful = await this.prisma.user_Progress.createMany({
+                data:data
+            })
+            if(!succesful){
+                return new Error('error in creating game')
+            }
+            }catch(error){
+                console.log(error)
+                throw new InternalServerErrorException('error in adding all games to userprogress')
+        }
+    }
+    async getGameForUser(request: Request,gameSkill:string){
+        try {
+          // Decode the JWT to get the user ID
+          console.log(request)
+          const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
+          const user = await this.getUserById(decoded.authId); 
+          console.log(user.userId)
+          // Find the highest gameUnitNumber that the user has completed
+          const latestCompletedGame = await this.prisma.user_Progress.findFirst({
+            where: {
+              userId: user.userId,
+              isCompleted: true
+            },
+            orderBy: {
+              game: {
+                gameUnitNumber: 'desc'
+              }
+            },
+            include: {
+              game: true
+            }
+          });
+      
+          // If the user hasn't completed any games, start with unit 1
+          const nextUnitNumber = latestCompletedGame ? latestCompletedGame.game.gameUnitNumber + 1 : 1;
+      
+          // Fetch all games up to the next unit number
+          const games = await this.prisma.game.findMany({
+            where: {
+              gameUnitNumber: {
+                lte: nextUnitNumber
+              },
+              gameSkill:gameSkill
+            }
+          });
+      
+          return games;
+        } catch (error) {
+          console.error('Error fetching games for user:', error);
+          throw new InternalServerErrorException('Failed to get games for user');
+        }
+      }
+    async getUserCourseTree(request:Request,gameSkill:string){
+        try{
+          const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
+          const user = await this.getUserById(decoded.authId); 
+          const latestCompletedGame = await this.prisma.user_Progress.findFirst({
+            where: {
+              userId: user.userId,
+              isCompleted: true
+            },
+            orderBy: {
+              game: {
+                gameUnitNumber: 'desc'
+              }
+            },
+            include: {
+              game: true
+            }
+          });
+      
+          // If the user hasn't completed any games, start with unit 1
+          const nextUnitNumber = latestCompletedGame ? latestCompletedGame.game.gameUnitNumber + 1 : 1;
+      
+          // Fetch the first game for each gameLessonNumber up to the next unit number
+          const games = await this.prisma.game.findMany({
+            where: {
+              gameUnitNumber: {
+                lte: nextUnitNumber
+              }
+            },
+            orderBy: {
+              gameLessonNumber: 'asc'
+            },
+            distinct: ['gameLessonNumber']
+          });
+      
+          const courTreeDTOs = games.map(game => new courTreeDTO({
+            gameUnit: game.gameUnit,
+            gameUnitNumber: game.gameUnitNumber,
+            gameLesson: game.gameLesson,
+            gameLessonNumber: game.gameLessonNumber
+          }));
+      
+          return courTreeDTOs;
+        } catch (error) {
+          console.error('Error fetching games for user:', error);
+          throw new InternalServerErrorException('Failed to get games for user');
+        }
+      }
+       
+    
+    
     
 }
 
