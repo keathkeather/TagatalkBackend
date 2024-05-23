@@ -47,7 +47,21 @@ export class UserController {
     @Post('addUserProgress')
     @UseGuards(JwtAuthGuard)
     async addUserProgress(@Req() request:Request, @Body('gameId') gameId: string,@Res() response:Response){
-        return await this.userService.addUserProgress(request,gameId,response);
+        return  this.userService.addUserProgress(request,gameId,response);
+    }
+    @Post('addAllProgress/:userId')
+    async adduserProgress(@Param('userId') userId:string){
+        return this.userService.addAllGamesToUserProgress(userId)
+    }
+    @Get('getAllGamesForUser/:gameSkill')
+    @UseGuards(JwtAuthGuard)
+    async getAllGamesForUser(@Req() request:Request , @Param('gameSkill') gameSkill:string){
+        return this.userService.getGameForUser(request,gameSkill)
+    }
+    @Get('getAllGamesForCourseTree/:gameSkill')
+    @UseGuards(JwtAuthGuard)
+    async getAllGamesForCourseTree(@Req() request:Request, @Param('gameSkill') gameSkill:string){
+        return this.userService.getUserCourseTree(request,gameSkill)
     }
 
 }
