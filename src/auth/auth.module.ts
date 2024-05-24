@@ -7,7 +7,8 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { MailerService } from '../mailer/mailer.service';
-
+import { UserService } from 'src/user/user.service';
+import { GameService } from 'src/game/game.service';
 @Module({
   imports:[
     PassportModule,
