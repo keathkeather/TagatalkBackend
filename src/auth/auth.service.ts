@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; 
-import { Auth } from '@prisma/client';
+import { Auth,Game } from '@prisma/client';
 import { RegisterDto } from './DTO/register.dto';
 import * as bcrypt from 'bcrypt';
 import { error } from 'console';
@@ -85,15 +85,32 @@ export class AuthService {
       if(user.confirmed_at){
         throw new BadRequestException('User already verified')
       }
-      await this.prisma.auth.update({
+      const updatedUser = await this.prisma.auth.update({
         where:{
-          confirmation_token:token
+          authId:user.authId
         },
-        data: {
-          email_confirmed_at: new Date(),
-          confirmation_token: null,
-        },
-      })
+        data:{
+          email_confirmed_at:new Date()
+        }
+      });
+      const games = await this.prisma.game.findMany();
+      const data = games.map(game=>({
+        userId: updatedUser.authId,
+        gameId: game.id,
+        isCompleted:false
+    }))
+    const succesful = await this.prisma.user_Progress.createMany({
+        data:data
+    })
+    if(!succesful){
+        return new Error('error in creating game')
+    }
+      if(!updatedUser){
+        throw new InternalServerErrorException('Failed to verify email')
+      }
+      
+    
+
     }catch(error){
       console.log(error)
       throw new InternalServerErrorException('Failed to verify email')
