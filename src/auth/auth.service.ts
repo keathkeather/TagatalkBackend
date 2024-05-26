@@ -26,7 +26,8 @@ export class AuthService {
     return this.prisma.auth.findUnique({
       where:{
         email:email,
-        role:Role.ADMIN 
+        role:Role.ADMIN ,
+        is_super_admin:true
       }
 
     })
@@ -154,10 +155,14 @@ export class AuthService {
         throw new BadRequestException('Failed to register user');
     }
 }
+
+
+
+
+
 //* Validate user credentials with promise of a sttring(token)
 async validateUser( email:string, password:string): Promise<String | null> {
     
-
     //* Find the user through emal  
     const user = await this.findByEmail(email);
     //* if user is nto found throw an Error 
@@ -184,18 +189,19 @@ async validateUser( email:string, password:string): Promise<String | null> {
   //* Validate admin credentials with promise of a string(token)
   async validateAdmin(email:string , password:string): Promise<String|null>{
     //*Find the admin through email
-    const user =  await this.findAdminByEmail(email);
-    if(!user){
-      throw new BadRequestException('user not found')
-    } 
-    
     try{
+      const user =  await this.findAdminByEmail(email);
+      if(!user){
+        throw new BadRequestException('user not found')
+      } 
+      if(user.is_super_admin===false){
+        throw new UnauthorizedException('User is not an admin')
+      }
+    
       const saltedPassword= password+process.env.SALT; //*Add the salt to the password
       const match= await bcrypt.compare(saltedPassword, user.encrypted_password); //* Compare the password wit the encrypted password
       if(match){
-        
-        //* Signs the token with the email and role of the user
-        return this.jwtService.sign({email:user.email, role:user.role})
+        return this.jwtService.sign({email:user.email, role:user.role,authId:user.authId})
 
       }else{
         
@@ -241,7 +247,20 @@ async validateUser( email:string, password:string): Promise<String | null> {
       return null;
     }
   }
-
+  async verifyToken(request:Request,Response:Response){
+    try{
+      const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
+      if(decoded){
+        Response.status(200).json({
+          message:'Token is valid'
+        })
+      }
+      ;
+    }catch(error){
+      console.log(error)
+      throw new UnauthorizedException('Invalid token')
+    }
+  }
   async refreshToken(request:Request):Promise<string|null>{
     try{
       const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });

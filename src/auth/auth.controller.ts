@@ -6,6 +6,7 @@ import { LocalGuard } from './guards/local.guard';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { Request, Response } from 'express';
 import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util';
+import { adminGuard } from './guards/admin.guard';
 @Controller('auth')
 export class AuthController {
 
@@ -73,7 +74,27 @@ export class AuthController {
     async resendVerification(@Body('email') email: string) {
         return this.authService.resendVerificationCode(email);
     }
+    @Post('verifyToken')
+    async verifyToken(@Req() request:Request, @Res() response:Response){
+        return this.authService.verifyToken(request,response);
+    }
 
+    @Post('admin/login')
+    @UseGuards(adminGuard)
+    async adminLogin(@Req() req:Request) {
+        try{
+            return req.user;
+        
+        }
+        catch(error){
+           
+            console.log(error)
+            
+        }
+        
+    }
+
+  
     
 
 }

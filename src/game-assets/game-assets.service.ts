@@ -3,6 +3,7 @@ import { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectC
 import { PrismaService } from '../prisma/prisma.service';
 import { Readable } from 'stream';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Game,Game_Assets } from '@prisma/client';
 @Injectable()
 export class GameAssetsService {
     constructor(private readonly prisma:PrismaService){}    
@@ -107,8 +108,37 @@ export class GameAssetsService {
     async getGameAssetByGameId(){
 
     }
-    async getGameAssetsByGameId(){
+    async getAllGamesAssets(gameId:string){
+        try{
+            const game = await this.prisma.game.findUnique({
+                where:{
+                    id:gameId
+                }
+            })
+            if(!game){
+                throw new Error('Game not found')
+            }
 
+            const assets = await this.prisma.game_Assets.findMany({
+                where:{
+                    gameId: game.id
+                }
+            })
+            const urls={}
+            await Promise.all(assets.map(async (asset, index) => {
+                const getObjectParams = {
+                  Bucket: process.env.AWS_BUCKET_NAME,
+                  Key: asset.fileUrl
+                }
+                const command = new GetObjectCommand(getObjectParams)
+                const url = await getSignedUrl(this.s3,command,{expiresIn:3600})
+                urls[`url${index}`] = url; // Add each URL to the urls object
+              }));
+            return urls
+        }catch(error){
+            console.log(error)
+            throw new InternalServerErrorException('failed to get game assets`')
+        }
     }
  
     
