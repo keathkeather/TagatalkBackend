@@ -249,8 +249,8 @@ async validateUser( email:string, password:string): Promise<String | null> {
   async verifyAdminToken(request:Request,Response:Response){
     try{
       const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
-      const isSuperAdmin = decoded.is_super_admin;
-      console.log(isSuperAdmin)
+      const isSuperAdmin = decoded.isSuperAdmin;
+      console.log(decoded.isSuperAdmin)
       if(isSuperAdmin==false||isSuperAdmin==null||isSuperAdmin==undefined){
         throw new UnauthorizedException('Unauthorized')
       }
