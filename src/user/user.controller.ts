@@ -43,7 +43,7 @@ export class UserController {
     @UseGuards(JwtAuthGuard)
     async getUserData(@Req() request:Request){
         return this.userService.getUserData(request);
-    }
+    }   
     @Post('addUserProgress')
     @UseGuards(JwtAuthGuard)
     async addUserProgress(@Req() request:Request, @Body('gameId') gameId: string,@Res() response:Response){

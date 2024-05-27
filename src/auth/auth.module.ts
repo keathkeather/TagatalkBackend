@@ -9,6 +9,7 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { MailerService } from '../mailer/mailer.service';
 import { UserService } from 'src/user/user.service';
 import { GameService } from 'src/game/game.service';
+import { adminStrategy } from './strategies/admin.strategy';
 @Module({
   imports:[
     PassportModule,
@@ -17,7 +18,7 @@ import { GameService } from 'src/game/game.service';
       signOptions:{expiresIn:'1h'}
     })
   ],
-  providers: [AuthService,PrismaService,JwtStrategy,LocalStrategy,MailerService],
+  providers: [AuthService,PrismaService,JwtStrategy,LocalStrategy,MailerService,adminStrategy],
   controllers: [AuthController]
 })
 export class AuthModule {}
