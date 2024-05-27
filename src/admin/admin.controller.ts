@@ -4,7 +4,7 @@ import { AdminService } from './admin.service';
 @Controller('admin')
 export class AdminController {
     constructor(private adminService: AdminService) {}
-
+    //TODO add guards to the routes (JWT AUTHGUARD)
     @Get('users')
     async getAllUsers(){
         return this.adminService.getAllUsers();
