@@ -187,32 +187,31 @@ async validateUser( email:string, password:string): Promise<String | null> {
   }
 
   //* Validate admin credentials with promise of a string(token)
-  async validateAdmin(email:string , password:string): Promise<String|null>{
-    //*Find the admin through email
-    try{
-      const user =  await this.findAdminByEmail(email);
-      if(!user){
-        throw new BadRequestException('user not found')
-      } 
-      if(user.is_super_admin===false){
-        throw new UnauthorizedException('User is not an admin')
+  async validateAdmin(email: string, password: string): Promise<string | null> {
+    try {
+      const user = await this.findAdminByEmail(email);
+      if (!user || !user.is_super_admin) {
+        throw new UnauthorizedException('Unauthorized');
       }
-    
-      const saltedPassword= password+process.env.SALT; //*Add the salt to the password
-      const match= await bcrypt.compare(saltedPassword, user.encrypted_password); //* Compare the password wit the encrypted password
-      if(match){
-        return this.jwtService.sign({email:user.email, role:user.role,authId:user.authId})
 
-      }else{
-        
-        throw new UnauthorizedException('Invalid password/email');
-        
+      const saltedPassword = password + process.env.SALT;
+      const match = await bcrypt.compare(saltedPassword, user.encrypted_password);
+      if (match) {
+        return this.jwtService.sign({ email: user.email, role: user.role, authId: user.authId });
+      } else {
+        throw new UnauthorizedException('Unauthorized');
       }
-    }catch(erorr){
-      console.log(error)
-      throw new InternalServerErrorException('failed to validate admin')
+    } catch (error) {
+      //* If the error is an UnauthorizedException, rethrow it
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      //* Log the error and throw InternalServerErrorException for other types of errors
+      console.error(error);
+      throw new InternalServerErrorException('Failed to validate admin');
     }
   }
+  
   async changePassword(request:Request, newPassword:string,oldPassword:string):Promise<Auth|null>{
     try{
       const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
