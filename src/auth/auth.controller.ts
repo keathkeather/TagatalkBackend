@@ -74,9 +74,9 @@ export class AuthController {
     async resendVerification(@Body('email') email: string) {
         return this.authService.resendVerificationCode(email);
     }
-    @Post('verifyToken')
+    @Post('admin/verifyToken')
     async verifyToken(@Req() request:Request, @Res() response:Response){
-        return this.authService.verifyToken(request,response);
+        return this.authService.verifyAdminToken(request,response);
     }
 
     @Post('admin/login')

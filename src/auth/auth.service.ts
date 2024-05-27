@@ -197,7 +197,7 @@ async validateUser( email:string, password:string): Promise<String | null> {
       const saltedPassword = password + process.env.SALT;
       const match = await bcrypt.compare(saltedPassword, user.encrypted_password);
       if (match) {
-        return this.jwtService.sign({ email: user.email, role: user.role, authId: user.authId });
+        return this.jwtService.sign({ email: user.email, role: user.role, authId: user.authId, isSuperAdmin: user.is_super_admin});
       } else {
         throw new UnauthorizedException('Unauthorized');
       }
@@ -246,9 +246,14 @@ async validateUser( email:string, password:string): Promise<String | null> {
       return null;
     }
   }
-  async verifyToken(request:Request,Response:Response){
+  async verifyAdminToken(request:Request,Response:Response){
     try{
       const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
+      const isSuperAdmin = decoded.is_super_admin;
+      console.log(isSuperAdmin)
+      if(isSuperAdmin==false||isSuperAdmin==null||isSuperAdmin==undefined){
+        throw new UnauthorizedException('Unauthorized')
+      }
       if(decoded){
         Response.status(200).json({
           message:'Token is valid'
