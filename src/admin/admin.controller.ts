@@ -1,86 +1,108 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
-
+import { Request } from 'express';
+import { JwtAuthGuard } from '../auth/guards/jwt.guard';
+import { adminGuard } from '../auth/guards/admin.guard';
+import { adminJwtGuard } from '../auth/guards/adminJwt.guard';
 @Controller('admin')
 export class AdminController {
     constructor(private adminService: AdminService) {}
-    //TODO add guards to the routes (JWT AUTHGUARD)
     @Get('users')
-    async getAllUsers(){
-        return this.adminService.getAllUsers();
+    @UseGuards(adminJwtGuard)
+    async getAllUsers(@Req() request:Request){
+        return this.adminService.getAllUsers(request);
     }
 
     @Get('reports')
-    async getAllReports(){
-        return this.adminService.getAllReports();
+    @UseGuards(adminJwtGuard)
+
+    async getAllReports(@Req() request:Request){
+        return this.adminService.getAllReports(request);
     }
     @Get('feedbacks')
-    async getAllFeedbacks(){
-        return this.adminService.getAllFeedbacks();
+    @UseGuards(adminJwtGuard)
+    async getAllFeedbacks(@Req() request:Request){
+        return this.adminService.getAllFeedbacks(request);
     }
     @Put('banUser/:authId')
-    async banUserById(@Param('authId') authId:string, @Body('month') month:number, @Body('days') days:number){
-        return this.adminService.banUserById(authId, month, days);
+    @UseGuards(adminJwtGuard)
+    async banUserById(@Param('authId') authId:string, @Body('month') month:number, @Body('days') days:number,@Req() request:Request){
+        return this.adminService.banUserById(authId, month, days,request);
     }
     @Get('bannedUsers')
-    async getAllBannedUsers(){
-        return this.adminService.getAllBannedUsers();
+    @UseGuards(adminJwtGuard)
+    async getAllBannedUsers(@Req() request:Request){
+        return this.adminService.getAllBannedUsers(request);
     }
     @Put('banUserIndefinitely/:authId')
-    async banUserIndefinitely(@Param('authId') authId:string){
-        return this.adminService.banUserIndefinitely(authId);
+    @UseGuards(adminJwtGuard)
+    async banUserIndefinitely(@Param('authId') authId:string,request:Request){
+        return this.adminService.banUserIndefinitely(authId,request);
     }
     @Put('unbanUser/:authId')
-    async unbanUser(@Param('authId') authId:string){
-        return this.adminService.unBanUserById(authId);
+    @UseGuards(adminJwtGuard)
+    async unbanUser(@Param('authId') authId:string,@Req() request:Request){
+        return this.adminService.unBanUserById(authId,request);
     }
     @Put('deleteUser/:authId')
-    async deleteUser(@Param('authId') authId:string){
-        return this.adminService.deleteUserById(authId);
+    @UseGuards(adminJwtGuard)
+    async deleteUser(@Param('authId') authId:string,@Req() request:Request){
+        return this.adminService.deleteUserById(authId,request);
     }
     @Put('deleteReport/:reportId')
-    async deleteReport(@Param('reportId') reportId:string){
-        return this.adminService.deleteReportById(reportId);
+    @UseGuards(adminJwtGuard)
+    async deleteReport(@Param('reportId') reportId:string,@Req() request:Request){
+        return this.adminService.deleteReportById(reportId,request);
     }
     @Put('deleteFeedback/:feedbackId')
-    async deleteFeedback(@Param('feedbackId') feedbackId:string){
-        return this.adminService.deleteFeedbackById(feedbackId);
+    @UseGuards(adminJwtGuard)
+    async deleteFeedback(@Param('feedbackId') feedbackId:string,@Req() request:Request){
+        return this.adminService.deleteFeedbackById(feedbackId,request);
     }
     @Delete('deleteUserPermanently/:authId')
-    async deleteUserPermanently(@Param('authId') authId:string){
-        return this.adminService.deleteUserPermanently(authId);
+    @UseGuards(adminJwtGuard)
+    async deleteUserPermanently(@Param('authId') authId:string,@Req() request:Request){
+        return this.adminService.deleteUserPermanently(authId,request);
     }
     @Put('restoreUser/:userId')
-    async restoreUser(@Param('userId') userId:string){
-        return this.adminService.restoreDeletedUser(userId);
+    @UseGuards(adminJwtGuard)
+    async restoreUser(@Param('userId') userId:string,@Req() request:Request){
+        return this.adminService.restoreDeletedUser(userId,request);
     }
     @Put('restoreReport/:reportId')
-    async restoreReport(@Param('reportId') reportId:string){
-        return this.adminService.restoreDeletedReport(reportId);
+    @UseGuards(adminJwtGuard)
+    async restoreReport(@Param('reportId') reportId:string,@Req() request:Request){
+        return this.adminService.restoreDeletedReport(reportId,request);
     }
     @Put('restoreFeedback/:feedbackId')
-    async restoreFeedback(@Param('feedbackId') feedbackId:string){
-        return this.adminService.restoreDeletedFeedback(feedbackId);
+    @UseGuards(adminJwtGuard)
+    async restoreFeedback(@Param('feedbackId') feedbackId:string,@Req() request:Request){
+        return this.adminService.restoreDeletedFeedback(feedbackId,request);
     }
     @Get('deletedUsers')
-    async getAllDeletedUsers(){
-        return this.adminService.getAllDeletedUsers();
+    @UseGuards(adminJwtGuard)
+    async getDeletedUsers(@Req() request:Request){
+        return this.adminService.getAllDeletedUsers(request);
     }
     @Get('deletedReports')
-    async getAllDeletedReports(){
-        return this.adminService.getAllDeletedReports();
+    @UseGuards(adminJwtGuard)
+    async getDeletedReports(@Req() request:Request){
+        return this.adminService.getAllDeletedReports(request);
     }
     @Get('deletedFeedbacks')
-    async getAllDeletedFeedbacks(){
-        return this.adminService.getAllDeletedFeedbacks();
+    @UseGuards(adminJwtGuard)
+    async getDeletedFeedback(@Req() request:Request){
+        return this.adminService.getAllDeletedFeedbacks(request);
     }
     @Put('promoteUserToAdmin/:authId')
+    @UseGuards(adminJwtGuard)
     async promoteUserToAdmin(@Param('authId') authId:string){
         return this.adminService.promoteUserToAdmin(authId);
     }
     @Post('unban-users')
-    async unbanUsers() {
-        return  this.adminService.handleUserUnban();
+    @UseGuards(adminJwtGuard)
+    async unbanUsers(request:Request) {
+        return  this.adminService.handleUserUnban(request);
     }
 
 

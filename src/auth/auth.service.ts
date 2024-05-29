@@ -246,6 +246,19 @@ async validateUser( email:string, password:string): Promise<String | null> {
       return null;
     }
   }
+  async verifyAdminJwtTokenForGuard( request:Request){
+    try{
+      const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
+      const isSuperAdmin = decoded.isSuperAdmin;
+      console.log(decoded.isSuperAdmin)
+      if(isSuperAdmin==false||isSuperAdmin==null||isSuperAdmin==undefined){
+        throw new UnauthorizedException('Unauthorized')
+      }
+      return decoded.authId
+    }catch(Error){
+      throw new UnauthorizedException('invalid token')
+    }
+  }
   async verifyAdminToken(request:Request,Response:Response){
     try{
       const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
