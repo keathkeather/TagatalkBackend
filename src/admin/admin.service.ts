@@ -1,27 +1,50 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; 
 import { Auth, User } from '@prisma/client';
 import { AuthService } from '../auth/auth.service';
 import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util';
 import { Role } from '../enum/role.enum';
+import { Request } from 'express';
+import { JwtService } from '@nestjs/jwt';
+import { decode } from 'punycode';
 @Injectable()
 export class AdminService {
-    constructor(private prisma:PrismaService,private authService:AuthService){}
+    constructor(private prisma:PrismaService,private authService:AuthService,private jwtService:JwtService){}
 
 
-    async getAllUsers():Promise<User[]|null>{
+    async checkAdminRole(request:Request):Promise<boolean>{
         try{
-            return this.prisma.user.findMany({   
-                where:{
-                    isDeleted:false,
-                    auth:{
-                        banned_until:null
-                    }
-                },
+            const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
+            if(decoded.isSuperAdmin===false|| decoded.isSuperAdmin === null){
+                return false;
             }
-            )
+            return true;
         }catch(Error){
-            throw Error('Failed to get all users')
+            console.log(Error.stack)
+            throw new UnauthorizedException('You are not authorized to perform this action')
+        }
+    }
+
+    async getAllUsers(request:Request):Promise<User[]|null>{
+        try{
+            
+            if(await this.checkAdminRole(request)==true){
+                console.log(await this.checkAdminRole(request))
+                return this.prisma.user.findMany({   
+                    where:{
+                        isDeleted:false,
+                        auth:{
+                            banned_until:null,
+                            role:Role.USER,
+                            is_super_admin:false||null
+                        }
+                    },
+                })    
+            }else{
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
+        }catch(Error){
+            throw new UnauthorizedException('Failed to get all users')
         }
     }
     async  promoteUserToAdmin(userId: string):Promise<Auth|null>{
@@ -31,7 +54,8 @@ export class AdminService {
                     authId: userId
                 },
                 data:{
-                    role:Role.ADMIN
+                    role:Role.ADMIN,
+                    is_super_admin:true
                 }
             })
             
@@ -40,10 +64,37 @@ export class AdminService {
         }
     }
 
-    async getAllReports(){
+    async getAllReports(request:Request){
         try{
-            return this.prisma.report.findMany(
-                {
+            
+            if(await this.checkAdminRole(request)){
+                return this.prisma.report.findMany(
+                    {
+                        where:{
+                            isDeleted:false,
+                            user:{
+                                isDeleted:false
+                            }
+                        },
+                        include:{
+                            user:{
+                                select:{
+                                    name:true,
+                                    email:true
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+        }catch(Error){
+            throw Error('Failed to get all reports')
+        }
+    }
+    async getAllFeedbacks(request:Request){
+        try{
+            if(await this.checkAdminRole(request)===true){
+                return this.prisma.feedback.findMany({
                     where:{
                         isDeleted:false,
                         user:{
@@ -58,37 +109,18 @@ export class AdminService {
                             }
                         }
                     }
-                }
-            )
-        }catch(Error){
-            throw Error('Failed to get all reports')
-        }
-    }
-    async getAllFeedbacks(){
-        try{
-            return this.prisma.feedback.findMany({
-                where:{
-                    isDeleted:false,
-                    user:{
-                        isDeleted:false
-                    }
-                },
-                include:{
-                    user:{
-                        select:{
-                            name:true,
-                            email:true
-                        }
-                    }
-                }
-                
-            })
+                    
+                })
+            }
         }catch(Error){
             throw Error('Failed to get all feedbacks')
         }   
     }
-    async banUserById(authId: string, months: number, days: number) {
+    async banUserById(authId: string, months: number, days: number,request:Request) {
         try {
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             const now = new Date();
             const bannedUntil = new Date();
             bannedUntil.setMonth(bannedUntil.getMonth() + months);
@@ -111,8 +143,11 @@ export class AdminService {
           throw new Error('Failed to ban user');
         }
       }
-    async banUserIndefinitely(authId: string) {
+    async banUserIndefinitely(authId: string,request:Request) {
             try {
+                if(await this.checkAdminRole(request)==false){
+                    throw new UnauthorizedException('You are not authorized to perform this action')
+                }
                 const bannedUntil = new Date(8640000000000000); 
 
                 const user = await this.authService.getUserByID(authId);
@@ -132,8 +167,11 @@ export class AdminService {
                 throw new Error('Failed to ban user');
             }
         }
-    async unBanUserById(authId:string){
+    async unBanUserById(authId:string,request:Request){
         try{
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             const user = await this.authService.getUserByID(authId)
             if(!user){
                 throw Error('User not found')
@@ -153,8 +191,11 @@ export class AdminService {
             throw Error('Failed to unban user')   
         }
     }
-    async getAllBannedUsers():Promise<User[]|null>{
+    async getAllBannedUsers(request:Request):Promise<User[]|null>{
         try{
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             return this.prisma.user.findMany({
                 where: {
                   isDeleted:false,
@@ -177,8 +218,11 @@ export class AdminService {
             throw Error('Failed to get all banned users')
         }
     }
-    async deleteReportById(reportId:string){
+    async deleteReportById(reportId:string,request:Request){
         try{
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             return this.prisma.report.update({
                 where:{
                     id:reportId
@@ -191,8 +235,11 @@ export class AdminService {
             throw Error('Failed to delete report')
         }
     }
-    async deleteFeedbackById(feedbackId:string){
+    async deleteFeedbackById(feedbackId:string,request:Request){
         try{
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             return this.prisma.feedback.update({
                 where:{
                     id:feedbackId
@@ -205,8 +252,11 @@ export class AdminService {
             throw Error('Failed to delete feedback')
         }
     }
-    async deleteUserById(userId:string){
+    async deleteUserById(userId:string,request:Request){
         try{
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             return this.prisma.user.update({
                 where:{
                     userId:userId
@@ -219,8 +269,11 @@ export class AdminService {
             throw Error('Failed to delete user')
         }
     }
-    async deleteUserPermanently(userId:string){
+    async deleteUserPermanently(userId:string,request:Request){
         try{
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             return this.prisma.user.delete({
                 where:{
                     userId:userId
@@ -230,8 +283,11 @@ export class AdminService {
             throw Error('Failed to delete user')
         }
     }
-    async restoreDeletedUser(userId:string){
+    async restoreDeletedUser(userId:string,request:Request){
         try{
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             const user = await this.prisma.user.findUnique({
                 where:{
                     userId:userId
@@ -253,19 +309,25 @@ export class AdminService {
             throw Error('Failed to restore user')
         }
     }
-    async getAllDeletedUsers():Promise<User[]|null>{
+    async getAllDeletedUsers(request:Request):Promise<User[]|null>{
         try{
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             return this.prisma.user.findMany({
                 where:{
-                    isDeleted:true
+                    isDeleted:true,
                 }
             })
         }catch(Error){
             throw Error('Failed to get all deleted users')
         }
     }
-    async getAllDeletedReports(){
+    async getAllDeletedReports(request:Request){
         try{
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             return this.prisma.report.findMany({
                 where:{
                     isDeleted:true
@@ -275,19 +337,26 @@ export class AdminService {
             throw Error('Failed to get all deleted reports')
         }
     }
-    async getAllDeletedFeedbacks(){
+    async getAllDeletedFeedbacks(request:Request){
         try{
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             return this.prisma.feedback.findMany({
                 where:{
                     isDeleted:true
                 }
             })
         }catch(Error){
+            console.log(Error.stack)
             throw Error('Failed to get all deleted feedbacks')
         }
     }
-    async restoreDeletedReport(reportId:string){
+    async restoreDeletedReport(reportId:string,request:Request){
         try{
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             const report = await this.prisma.report.findUnique({
                 where:{
                     id:reportId
@@ -309,8 +378,11 @@ export class AdminService {
             throw Error('Failed to restore report')
         }
     }
-    async restoreDeletedFeedback(feedbackId:string){
+    async restoreDeletedFeedback(feedbackId:string,request:Request){
         try{
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             const feedback = await this.prisma.feedback.findUnique({
                 where:{
                     id:feedbackId
@@ -332,8 +404,11 @@ export class AdminService {
             throw Error('Failed to restore feedback')
         }
     }
-    async handleUserUnban() {
+    async handleUserUnban(request:Request) {
         try{
+            if(await this.checkAdminRole(request)==false){
+                throw new UnauthorizedException('You are not authorized to perform this action')
+            }
             const currentDate = new Date();
             const users = await this.prisma.auth.findMany({
                 where: {
