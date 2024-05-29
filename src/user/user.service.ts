@@ -425,7 +425,10 @@ export class UserService {
           console.error('Error fetching games for user:', error);
           throw new InternalServerErrorException('Failed to get games for user');
         }
-      }
+    }
+
+    
+
       
 }
 

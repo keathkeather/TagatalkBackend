@@ -293,6 +293,7 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   deletedAt    DateTime?
+  userPoints   Int      @default(0)
   report       Report[]
   feedback     Feedback[]
   userProgress User_Progress[]
