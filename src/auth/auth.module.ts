@@ -20,6 +20,7 @@ import { AdminJwtStrategy } from './strategies/adminJwt.stategy';
     })
   ],
   providers: [AuthService,PrismaService,JwtStrategy,LocalStrategy,MailerService,adminStrategy,AdminJwtStrategy],
-  controllers: [AuthController]
+  controllers: [AuthController],
+  exports: [AuthService]
 })
 export class AuthModule {}

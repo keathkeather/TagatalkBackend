@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,40 +6,6 @@ datasource db {
   provider = "postgresql"
   url      = env("TESTING_DATABASE_URL")
 }
-
-
-enum aal_level {
-  aal1
-  aal2
-  aal3
-
-}
-
-enum code_challenge_method {
-  s256
-  plain
-
-}
-
-enum factor_status {
-  unverified
-  verified
-
-}
-
-enum factor_type {
-  totp
-  webauthn
-
-}
-
-enum role {
-  ADMIN
-  CONTENTMANAGER
-  USER
-
-}
-
 
 model audit_log_entries {
   instance_id String?   @db.Uuid
@@ -76,6 +36,7 @@ model flow_state {
   @@index([auth_code], map: "idx_auth_code")
   @@index([user_id, authentication_method], map: "idx_user_id_auth_method")
 }
+
 model identities {
   provider_id     String
   user_id         String    @db.Uuid
@@ -84,22 +45,21 @@ model identities {
   last_sign_in_at DateTime? @db.Timestamptz(6)
   created_at      DateTime? @db.Timestamptz(6)
   updated_at      DateTime? @db.Timestamptz(6)
-  email           String?      
+  email           String?
   id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  auth           Auth     @relation(fields: [user_id], references: [authId], onDelete: Cascade, onUpdate: NoAction)
+  auth            Auth      @relation(fields: [user_id], references: [authId], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([provider_id, provider], map: "identities_provider_id_provider_unique")
   @@index([email])
   @@index([user_id])
-
 }
+
 model instances {
   id              String    @id @db.Uuid
   uuid            String?   @db.Uuid
   raw_base_config String?
   created_at      DateTime? @db.Timestamptz(6)
   updated_at      DateTime? @db.Timestamptz(6)
-
 }
 
 model mfa_amr_claims {
@@ -123,7 +83,7 @@ model mfa_challenges {
 
   @@index([created_at(sort: Desc)], map: "mfa_challenge_created_at_idx")
 }
-//* multi factor factors
+
 model mfa_factors {
   id             String           @id @db.Uuid
   user_id        String           @db.Uuid
@@ -134,11 +94,12 @@ model mfa_factors {
   updated_at     DateTime         @db.Timestamptz(6)
   secret         String?
   mfa_challenges mfa_challenges[]
-  auth          Auth           @relation(fields: [user_id], references: [authId], onDelete: Cascade, onUpdate: NoAction)
+  auth           Auth             @relation(fields: [user_id], references: [authId], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([user_id, created_at], map: "factor_id_created_at_idx")
   @@index([user_id])
 }
+
 model refresh_tokens {
   instance_id String?   @db.Uuid
   id          BigInt    @id @default(autoincrement())
@@ -158,7 +119,6 @@ model refresh_tokens {
   @@index([updated_at(sort: Desc)])
 }
 
-//* SAML (Security Assertion Markup Language
 model saml_providers {
   id                String        @id @db.Uuid
   sso_provider_id   String        @db.Uuid
@@ -190,7 +150,7 @@ model saml_relay_states {
   @@index([for_email])
   @@index([sso_provider_id])
 }
-//* This is for sessions
+
 model sessions {
   id             String           @id @db.Uuid
   user_id        String           @db.Uuid
@@ -205,15 +165,14 @@ model sessions {
   tag            String?
   mfa_amr_claims mfa_amr_claims[]
   refresh_tokens refresh_tokens[]
-  auth          Auth            @relation(fields: [user_id], references: [authId], onDelete: Cascade, onUpdate: NoAction)
+  auth           Auth             @relation(fields: [user_id], references: [authId], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([not_after(sort: Desc)])
   @@index([user_id])
   @@index([user_id, created_at], map: "user_id_created_at_idx")
 }
-//* This is the single sign on domains
-model sso_domains {
 
+model sso_domains {
   id              String        @id @db.Uuid
   sso_provider_id String        @db.Uuid
   domain          String
@@ -223,8 +182,8 @@ model sso_domains {
 
   @@index([sso_provider_id])
 }
-//* This is the single sign on provider 
-model sso_providers {  
+
+model sso_providers {
   id                String              @id @db.Uuid
   resource_id       String?
   created_at        DateTime?           @db.Timestamptz(6)
@@ -232,16 +191,14 @@ model sso_providers {
   saml_providers    saml_providers[]
   saml_relay_states saml_relay_states[]
   sso_domains       sso_domains[]
-
 }
-//* this is the auth schema
+
 model Auth {
   instance_id                 String?       @db.Uuid
   authId                      String        @id @default(uuid()) @db.Uuid
   aud                         String?       @db.VarChar(255)
-  role                        role          @default(USER)
   email                       String?       @unique @db.VarChar(255)
-  encrypted_password          String?       @db.VarChar()
+  encrypted_password          String?       @db.VarChar
   email_confirmed_at          DateTime?     @db.Timestamptz(6)
   invited_at                  DateTime?     @db.Timestamptz(6)
   confirmation_token          String?       @unique @db.VarChar(255)
@@ -262,7 +219,7 @@ model Auth {
   phone_change                String?       @default("")
   phone_change_token          String?       @default("") @db.VarChar(255)
   phone_change_sent_at        DateTime?     @db.Timestamptz(6)
-  confirmed_at                DateTime?     @db.Timestamptz(6) 
+  confirmed_at                DateTime?     @db.Timestamptz(6)
   email_change_token_current  String?       @default("") @db.VarChar(255)
   email_change_confirm_status Int?          @default(0) @db.SmallInt
   banned_until                DateTime?     @db.Timestamptz(6)
@@ -271,119 +228,169 @@ model Auth {
   is_sso_user                 Boolean       @default(false)
   deleted_at                  DateTime?     @db.Timestamptz(6)
   is_anonymous                Boolean       @default(false)
+  role                        role          @default(USER)
+  user                        User?
   identities                  identities[]
   mfa_factors                 mfa_factors[]
   sessions                    sessions[]
-  user                        User?        
 
   @@index([instance_id])
   @@index([is_anonymous])
-  
 }
 
 model User {
-  userId       String   @id  @db.Uuid
-  auth         Auth    @relation(fields: [userId], references: [authId])
-  email        String   @unique
-  name         String?
-  profileImage String?
+  email              String          @unique
+  name               String?
+  userStreak         Int             @default(0)
+  isDeleted          Boolean         @default(false)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  deletedAt          DateTime?
+  userId             String          @id @db.Uuid
   profileDescription String?
-  userStreak   Int      @default(0)
-  isDeleted    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  deletedAt    DateTime?
-  userPoints   Int      @default(0)
-  report       Report[]
-  feedback     Feedback[]
-  userProgress User_Progress[]
-  Notification Notification[]
+  profileImage       String?
+  userPoints         Int             @default(0)
+  feedback           Feedback[]
+  Notification       Notification[]
+  report             Report[]
+  auth               Auth            @relation(fields: [userId], references: [authId])
+  userProgress       User_Progress[]
 }
 
 model User_Progress {
-  progressId   String      @id @default(uuid()) @db.Uuid
-  user         User        @relation(fields: [userId], references: [userId]) 
-  userId       String      @db.Uuid
-  game         Game        @relation(fields: [gameId], references: [id])
-  gameId       String      @db.Uuid
-  isCompleted  Boolean
-  isDeleted    Boolean  @default(false)
+  progressId  String  @id @default(uuid()) @db.Uuid
+  userId      String  @db.Uuid
+  gameId      String  @db.Uuid
+  isCompleted Boolean
+  isDeleted   Boolean @default(false)
+  game        Game    @relation(fields: [gameId], references: [id])
+  user        User    @relation(fields: [userId], references: [userId])
 }
 
+model Skill {
+  id        String @id @default(uuid()) @db.Uuid
+  skillName String
+  unit      Unit[]
+}
+
+model Unit {
+  id         String    @id @default(uuid()) @db.Uuid
+  unitNumber Int?
+  unitName   String
+  skillId    String    @db.Uuid
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
+  isDeleted  Boolean   @default(false)
+  updatedAt  DateTime  @updatedAt
+  lesson     Lesson[]
+  skill      Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+}
+
+model Lesson {
+  id           String    @id @default(uuid()) @db.Uuid
+  lessonNumber Int?
+  lessonName   String
+  unitId       String    @db.Uuid
+  createdAt    DateTime  @default(now())
+  deletedAt    DateTime?
+  isDeleted    Boolean   @default(false)
+  updatedAt    DateTime  @updatedAt
+  game         Game[]
+  unit         Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+}
 
 model Game {
-  id String @id @default(uuid()) @db.Uuid
-  gameSkill String 
-  gameType String
-  gameUnit String
-  gameUnitNumber Int
-  gameLesson String
-  gameLessonNumber Int 
-  gameValue Int 
-  isDeleted    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?  
-  gameAssets Game_Assets[]
+  id           String          @id @default(uuid()) @db.Uuid
+  gameValue    Int             @default(100)
+  isDeleted    Boolean         @default(false)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  deletedAt    DateTime?
+  lessonId     String          @db.Uuid
+  gameType     Int
+  lesson       Lesson          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  gameAssets   Game_Assets[]
   userProgress User_Progress[]
-  
 }
-
 
 model Game_Assets {
-  id        String   @id @default(uuid()) @db.Uuid
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  gameId    String   @db.Uuid
-  assetName String   
+  id        String    @id @default(uuid()) @db.Uuid
+  gameId    String    @db.Uuid
+  assetName String
   assetType String
   fileUrl   String
-  isDeleted Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isDeleted Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+  game      Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
 }
 
-
-model Report{
-  id String @id @default(uuid()) @db.Uuid
-  userId String @db.Uuid
-  user User @relation(fields: [userId], references:[userId])
-  reportTitle String
+model Report {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @db.Uuid
+  reportTitle       String
   reportDescription String
-  isDeleted Boolean  @default(false)
-  createdAt DateTime @default(now())
-  deletedAt DateTime?
+  isDeleted         Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  deletedAt         DateTime?
+  user              User      @relation(fields: [userId], references: [userId])
 }
 
-
-model Feedback{
-  id String @id @default(uuid()) @db.Uuid
-  userId String @db.Uuid
-  user User @relation(fields: [userId], references:[userId])
-  feedbackTitle String
+model Feedback {
+  id                  String    @id @default(uuid()) @db.Uuid
+  userId              String    @db.Uuid
+  feedbackTitle       String
   feedbackDescription String
-  isDeleted Boolean @default(false)
-  createdAt DateTime @default(now())
-  deletedAt DateTime?
+  isDeleted           Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  deletedAt           DateTime?
+  user                User      @relation(fields: [userId], references: [userId])
 }
-
 
 model Notification {
-  id String @id @default(uuid()) @db.Uuid
-  userId String @db.Uuid
-  user User @relation(fields: [userId], references:[userId])
-  notificationTitle String
+  id                      String               @id @default(uuid()) @db.Uuid
+  userId                  String               @db.Uuid
+  notificationTitle       String
   notificationDescription String
-  isDeleted Boolean @default(false)
-  createdAt DateTime @default(now())
-  deletedAt DateTime 
-  notification_setting_id Int @unique
-  Notification_setting Notification_setting @relation(fields: [notification_setting_id], references: [id])
+  isDeleted               Boolean              @default(false)
+  createdAt               DateTime             @default(now())
+  deletedAt               DateTime
+  notification_setting_id Int                  @unique
+  Notification_setting    Notification_setting @relation(fields: [notification_setting_id], references: [id])
+  user                    User                 @relation(fields: [userId], references: [userId])
 }
 
 model Notification_setting {
-  id Int @id @default(autoincrement()) 
+  id                Int           @id @default(autoincrement())
   emailNotifEnabled Boolean
-  pushNotifEnabled Boolean
-  Notification Notification?
+  pushNotifEnabled  Boolean
+  Notification      Notification?
+}
+
+enum aal_level {
+  aal1
+  aal2
+  aal3
+}
+
+enum code_challenge_method {
+  s256
+  plain
+}
+
+enum factor_status {
+  unverified
+  verified
+}
+
+enum factor_type {
+  totp
+  webauthn
+}
+
+enum role {
+  ADMIN
+  CONTENT_EDITOR
+  USER
 }

@@ -1,24 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GameController } from './game.controller';
-import { GameService } from './game.service';
+import { LessonController } from './lesson.controller';
+import { LessonService } from './lesson.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { LessonService } from '../lesson/lesson.service';
+import { SkillService } from '../skill/skill.service';
 import { forwardRef } from '@nestjs/common';
-import { LessonModule } from '../lesson/lesson.module';
 import { UnitModule } from '../unit/unit.module';
-
-describe('GameController', () => {
-  let controller: GameController;
+describe('LessonController', () => {
+  let controller: LessonController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [GameController],providers:[GameService,PrismaService,LessonService],imports: [
-        forwardRef(() => LessonModule),
+      controllers: [LessonController],providers: [
+        LessonService,
+        PrismaService,
+        SkillService,
+      ],
+      imports: [
         forwardRef(() => UnitModule), // Ensure UnitModule is imported
       ],
     }).compile();
 
-    controller = module.get<GameController>(GameController);
+    controller = module.get<LessonController>(LessonController);
   });
 
   it('should be defined', () => {
