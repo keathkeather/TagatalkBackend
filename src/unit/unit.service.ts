@@ -61,11 +61,14 @@ export class UnitService {
         }
       }
       
-    async getUnitByUnitNumber(unitNumber:number){
+    async getUnitByUnitNumber(unitNumber:number,skillName:string){
         try{
             const unit = await this.prisma.unit.findFirst({
                 where:{
-                    unitNumber:unitNumber
+                    unitNumber:unitNumber,
+                    skill:{
+                        skillName:skillName
+                    }
                 }
             })
             if(!unit){
