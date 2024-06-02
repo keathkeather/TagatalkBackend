@@ -26,6 +26,11 @@ export class UnitService {
           // Query the maximum unitNumber from the Unit table
           const maxUnitNumber = await this.prisma.unit.findMany({
             take: 1,
+            where:{
+              skill:{
+                skillName:skillName
+              }
+            },
             orderBy: {
               unitNumber: 'desc',
             },
@@ -33,7 +38,6 @@ export class UnitService {
               unitNumber: true,
             },
           });
-      
           // Determine the new unitNumber
           const newUnitNumber = maxUnitNumber.length > 0 ? maxUnitNumber[0].unitNumber + 1 : 1;
       

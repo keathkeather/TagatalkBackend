@@ -11,8 +11,8 @@ export class LessonController {
         return this.lessonService.getAllLessons();
     }
 
-    @Post('createLesson/:unitNumber')
-    async createLesson(@Body('lessonName') lessonName:string, @Param('unitNumber',ParseIntPipe) unitNumber:number){
-        return this.lessonService.createLesson(lessonName,unitNumber);
+    @Post('createLesson/:skillName/:unitNumber')
+    async createLesson(@Body('lessonName') lessonName:string,@Param('skillName') skillName:string,@Param('unitNumber',ParseIntPipe) unitNumber:number){
+        return this.lessonService.createLesson(lessonName,unitNumber,skillName);
     }
 }
