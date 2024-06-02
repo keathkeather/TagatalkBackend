@@ -23,13 +23,13 @@ export class GameService {
             throw new InternalServerErrorException('Failed fetching game')
         }
     }
-    async createGame(gameDTO:gameDTO,lessonNumber : number):Promise<Game| null>{
+    async createGame(gameDTO:gameDTO,lessonId : string):Promise<Game| null>{
         try{
             const {
                 gameType,
                 gameValue
             } = gameDTO;
-            const lesson = await this.lessonService.getLessonByLessonNumber(lessonNumber);
+            const lesson = await this.lessonService.getLessonById(lessonId);
             const newGame = await this.prisma.game.create({
                 data:{
                     gameType:gameType,
