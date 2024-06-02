@@ -1,12 +1,13 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, InternalServerErrorException, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { gameDTO } from './DTO/game.dto';
 import { Game } from '@prisma/client';
+import { LessonService } from '../lesson/lesson.service';
 
 @Injectable()
 export class GameService {
 
-    constructor(private readonly prisma:PrismaService){}
+    constructor(private readonly prisma:PrismaService , @Inject(forwardRef(()=> LessonService))private lessonService: LessonService){}
     async getGameByID(gameId:string):Promise<Game|null>{
         try{
             const game = await this.prisma.game.findUnique({
@@ -22,27 +23,18 @@ export class GameService {
             throw new InternalServerErrorException('Failed fetching game')
         }
     }
-    async createGame(gameDTO:gameDTO){
+    async createGame(gameDTO:gameDTO,lessonNumber : number):Promise<Game| null>{
         try{
             const {
-                gameSkill, 
                 gameType,
-                gameUnit,
-                gameUnitNumber,
-                gameLesson,
-                gameLessonNumber,
                 gameValue
             } = gameDTO;
-        
+            const lesson = await this.lessonService.getLessonByLessonNumber(lessonNumber);
             const newGame = await this.prisma.game.create({
                 data:{
-                    gameSkill:gameSkill,
                     gameType:gameType,
-                    gameUnit:gameUnit,
-                    gameUnitNumber:gameUnitNumber,
-                    gameLesson:gameLesson,
-                    gameLessonNumber:gameLessonNumber,
-                    gameValue:gameValue
+                    gameValue:gameValue,
+                    lessonId:lesson.id
                 } 
                 
             })
@@ -61,12 +53,7 @@ export class GameService {
     async updateGame(gameId:string, gameDTO:gameDTO){
         try{
             const {
-                gameSkill, 
                 gameType,
-                gameUnit,
-                gameUnitNumber,
-                gameLesson,
-                gameLessonNumber,
                 gameValue
             } = gameDTO;
 
@@ -93,7 +80,9 @@ export class GameService {
         try{
             const games = await this.prisma.game.findMany({
                 where:{
-                    gameLessonNumber:lessonNumber
+                    lesson:{
+                        lessonNumber:lessonNumber
+                    }
                 }
             })
             if(games){
@@ -112,7 +101,12 @@ export class GameService {
               }
           const games = await this.prisma.game.findMany({
             where: {
-              gameUnitNumber: gameUnitNumber
+              lesson:{
+                    unit:{
+                        unitNumber:gameUnitNumber
+                    }
+                
+              }
             }
           })
           return games;
@@ -129,19 +123,9 @@ export class GameService {
             throw new InternalServerErrorException('Error fetching all games')
         }
     }
-    async updateGameType(){
-        const game = await this.prisma.game.updateMany({
-            where:{
-                gameType:"Question Type"
-            },
-            data:{
-                gameType:"Read and Respond"
-            }
-        })
-        if(!game){
-            throw new InternalServerErrorException('Error updating games')
-        }
-        return game;
-    }
+
+
+    
+    
 
 }

@@ -93,6 +93,10 @@ export class AuthController {
         }
         
     }
+    @Post('admin/register')
+    async adminRegister(@Body('email') email:string, @Body('password') password:string ): Promise<Auth> {
+        return this.authService.generateAdminAccount(email,password);
+    }
 
   
     

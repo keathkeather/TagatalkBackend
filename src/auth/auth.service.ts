@@ -6,10 +6,10 @@ import * as bcrypt from 'bcrypt';
 import { error } from 'console';
 import { JwtService } from '@nestjs/jwt';
 import { loginDto } from './DTO/login.dto';
-import { Role } from './enums/role.enum';
 import e, { Request, Response } from 'express';
 import * as crypto from 'crypto';
 import { MailerService } from '../mailer/mailer.service';
+import { Role } from './enums/role.enum';
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService,private jwtService:JwtService , private mailerService:MailerService) {}
@@ -91,7 +91,8 @@ export class AuthService {
           authId:user.authId
         },
         data:{
-          email_confirmed_at:new Date()
+          email_confirmed_at:new Date(),
+          confirmation_token:null
         }
       });
       const games = await this.prisma.game.findMany();
@@ -111,7 +112,7 @@ export class AuthService {
       }
       
     
-
+      return succesful;
     }catch(error){
       console.log(error)
       throw new InternalServerErrorException('Failed to verify email')
@@ -156,8 +157,24 @@ export class AuthService {
     }
 }
 
-
-
+async generateAdminAccount(email:string, password:string){
+  try{
+    const saltedPassword = password+process.env.SALT;
+    const hashedPassword = await bcrypt.hash(saltedPassword,10);
+    const newUser = await this.prisma.auth.create({
+      data:{
+        email,
+        encrypted_password:hashedPassword,
+        role:Role.ADMIN,
+        is_super_admin:true
+      }
+    });
+    return newUser;
+  }catch(error){
+    console.log(error)
+    throw new InternalServerErrorException('Failed to generate admin account')
+  }
+}
 
 
 //* Validate user credentials with promise of a sttring(token)
@@ -209,6 +226,30 @@ async validateUser( email:string, password:string): Promise<String | null> {
       //* Log the error and throw InternalServerErrorException for other types of errors
       console.error(error);
       throw new InternalServerErrorException('Failed to validate admin');
+    }
+  }
+
+  async validateContentEditor(email:string, password:string):Promise<string|null>{
+    try{
+      const user = await this.prisma.auth.findUnique({
+        where:{
+          email:email,
+          // role:Role.CONTENT_EDITOR
+        }
+      });
+      if(!user){
+        throw new UnauthorizedException('Unauthorized')
+      }
+      const saltedPassword = password+process.env.SALT;
+      const match = await bcrypt.compare(saltedPassword, user.encrypted_password);
+      if(match){
+        return this.jwtService.sign({email:user.email,role:user.role,authId:user.authId})
+      }else{
+        throw new UnauthorizedException('Unauthorized')
+      }
+    }catch(error){
+      console.error(error);
+      throw new InternalServerErrorException('Failed to validate content editor')
     }
   }
   
@@ -394,4 +435,5 @@ async validateUser( email:string, password:string): Promise<String | null> {
     })
   }
 }
+
 

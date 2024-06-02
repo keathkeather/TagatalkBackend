@@ -24,6 +24,10 @@ export class AdminController {
     async getAllFeedbacks(@Req() request:Request){
         return this.adminService.getAllFeedbacks(request);
     }
+    @Put('updateAdmin/:authId')
+    async updateAdmin(@Param('authId') authId:string){
+        return this.adminService.promoteUserToAdmin(authId);
+    }
     @Put('banUser/:authId')
     @UseGuards(adminJwtGuard)
     async banUserById(@Param('authId') authId:string, @Body('month') month:number, @Body('days') days:number,@Req() request:Request){
