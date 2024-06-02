@@ -10,7 +10,23 @@ export class LessonService {
     async getAllLessons(){
         return this.prisma.lesson.findMany();
     }
-    async createLesson(lessonName:string,unitNumber:number){
+    async getLessonById(lessonId:string){
+        try{
+            const lesson = await this.prisma.lesson.findUnique({
+                where:{
+                    id:lessonId
+                }
+            })
+            if(!lesson){
+                throw new Error('Lesson not found')
+            }
+            return lesson;
+        }catch(error){
+            console.log(error)
+            throw new Error('Error while fetching lesson')
+        }
+    }
+    async createLesson(lessonName:string,unitNumber:number,skillName:string){
         try{
             const unit = await this.unitService.getUnitByUnitNumber(unitNumber);
             if(!unit){
@@ -18,6 +34,14 @@ export class LessonService {
             }
             const maxLessonNumber = await this.prisma.lesson.findMany({
                 take:1,
+                where:{
+                    unitId:unit.id,
+                    unit:{
+                        skill:{
+                            skillName:skillName
+                        }
+                    }
+                },
                 orderBy:{
                     lessonNumber:'desc'
                 },

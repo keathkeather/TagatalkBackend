@@ -5,9 +5,9 @@ import { gameDTO } from './DTO/game.dto';
 export class GameController {
     constructor(private readonly gameService:GameService) {}
 
-    @Post('createGame/:lessonNumber')
-    async createGame(@Body() gameDTO:gameDTO,@Param('lessonNumber',ParseIntPipe) lessonNumber:number){
-        return this.gameService.createGame(gameDTO,lessonNumber);
+    @Post('createGame/:lessonId')
+    async createGame(@Body() gameDTO:gameDTO,@Param('lessonId') lessonId:string){
+        return this.gameService.createGame(gameDTO,lessonId);
     }
     @Put('updateGame/:gameId')
     async updateGame(@Body() gameDTO:gameDTO, @Param('gameId') gameId:string){
