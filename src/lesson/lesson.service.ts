@@ -28,7 +28,7 @@ export class LessonService {
     }
     async createLesson(lessonName:string,unitNumber:number,skillName:string){
         try{
-            const unit = await this.unitService.getUnitByUnitNumber(unitNumber);
+            const unit = await this.unitService.getUnitByUnitNumber(unitNumber,skillName);
             if(!unit){
                 throw new Error('Unit not found')
             }
