@@ -15,7 +15,7 @@ export class MailerService {
         });
       }
       async sendVerificationEmail(email: string, token: string) {
-        const url = `http://${process.env.VERIFICATION_IP}:3000/auth/verify/${token}`;
+        const url = `http://localhost:3000/auth/verify/${token}`;
     
         await this.transporter.sendMail({
           to: email,
