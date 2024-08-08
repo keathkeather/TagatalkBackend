@@ -10,6 +10,7 @@ import e, { Request, Response } from 'express';
 import * as crypto from 'crypto';
 import { MailerService } from '../mailer/mailer.service';
 import { Role } from './enums/role.enum';
+import { ChangePasswordDto } from './DTO/changePassword.dto';
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService,private jwtService:JwtService , private mailerService:MailerService) {}
@@ -32,7 +33,19 @@ export class AuthService {
 
     })
   }  
-  
+  async findContentEditorByEmail(email:string):Promise<Auth|null>{
+    try{
+      return this.prisma.auth.findFirst({
+        where:{
+          email:email,
+          role:Role.CONTENT_EDITOR
+        }
+      })      
+    }catch(error){
+      console.log(error)
+      throw new InternalServerErrorException('Failed to find content editor by email')
+    }
+  }
   async findUserByPassword(password:string):Promise<Auth|null>{
     const encryptedPassword = await this.encryptPassword(password)
     return this.prisma.auth.findFirst({
@@ -66,8 +79,6 @@ export class AuthService {
     }
   }
 
-
-
   async encryptPassword(password:string):Promise<string|null>{
     const saltedPassword = password+process.env.SALT
     return await bcrypt.hash(saltedPassword,10)
@@ -95,7 +106,7 @@ export class AuthService {
           confirmation_token:null
         }
       });
-      const games = await this.prisma.game.findMany();
+      const games = await this.prisma.game.findMany(); //TODO change this probably 
       const data = games.map(game=>({
         userId: updatedUser.authId,
         gameId: game.id,
@@ -112,7 +123,7 @@ export class AuthService {
       }
       
     
-      return succesful;
+      return {message: 'Email verified succesfully'}
     }catch(error){
       console.log(error)
       throw new InternalServerErrorException('Failed to verify email')
@@ -120,17 +131,15 @@ export class AuthService {
     }
   }
     
-  async RegisterUser(registerDto: RegisterDto): Promise<Auth> {
+  async RegisterUser(registerDto: RegisterDto) {
     const { email, password } = registerDto;
     if (!email || !password) {
         throw new BadRequestException('Email and password are required');
     }
-    
     const saltedPassword = password + process.env.SALT //* Add the  salt to the password
     const hashedPassword = await bcrypt.hash(saltedPassword, 10); //* Hash the password with the salt
     const emailToken = crypto.randomBytes(20).toString('hex');
     console.log(emailToken)
-    try {
         const newUser = await this.prisma.auth.create({
             data: {
                 email,
@@ -149,16 +158,12 @@ export class AuthService {
           }
         })
         await this.mailerService.sendVerificationEmail(email, emailToken);
-        return newUser;
-        
-    } catch (error) {
-        console.log(error);
-        throw new BadRequestException('Failed to register user');
-    }
+        return {message: 'User registered'}; 
 }
 
-async generateAdminAccount(email:string, password:string){
-  try{
+async generateAdminAccount(registerDto:RegisterDto){
+  
+    const {email,password} = registerDto;
     const saltedPassword = password+process.env.SALT;
     const hashedPassword = await bcrypt.hash(saltedPassword,10);
     const newUser = await this.prisma.auth.create({
@@ -169,18 +174,18 @@ async generateAdminAccount(email:string, password:string){
         is_super_admin:true
       }
     });
-    return newUser;
-  }catch(error){
-    console.log(error)
-    throw new InternalServerErrorException('Failed to generate admin account')
-  }
+    if(!newUser){
+      throw new InternalServerErrorException('Failed to create admin account')
+    }
+    return {message: 'Admin account created'}
 }
 
 
+
+
 //* Validate user credentials with promise of a sttring(token)
-async validateUser( email:string, password:string): Promise<String | null> {
-    
-    //* Find the user through emal  
+async validateUser( email:string, password:string): Promise<{token:string} | null> {
+    //* Find the user through email  
     const user = await this.findByEmail(email);
     //* if user is nto found throw an Error 
     if (!user) {
@@ -189,23 +194,19 @@ async validateUser( email:string, password:string): Promise<String | null> {
     if(user.email_confirmed_at===null){
       throw new UnauthorizedException('Email not verified')
     }
-    try {
+  
       const saltedPassword = password+process.env.SALT; //* Add the salt to the password
       const match = await bcrypt.compare(saltedPassword, user.encrypted_password); //* Compare the password with the encrypted password
       if (match) {
-        return this.jwtService.sign({ email: user.email ,role:user.role,authId: user.authId}); //* Signs the token with the email and role of the user
+        const token =  this.jwtService.sign({ email: user.email ,role:user.role,authId: user.authId}); //* Signs the token with the email and role of the user
+        return {token:token};
       } else {
         throw new UnauthorizedException('Invalid password/email');
       }
-    } catch (error) {
-      console.log(error);
-      throw new InternalServerErrorException('Failed to validate user');
-    }
   }
 
   //* Validate admin credentials with promise of a string(token)
-  async validateAdmin(email: string, password: string): Promise<string | null> {
-    try {
+  async validateAdmin(email: string, password: string): Promise<{ token: string } | null> {
       const user = await this.findAdminByEmail(email);
       if (!user || !user.is_super_admin) {
         throw new UnauthorizedException('Unauthorized');
@@ -214,29 +215,16 @@ async validateUser( email:string, password:string): Promise<String | null> {
       const saltedPassword = password + process.env.SALT;
       const match = await bcrypt.compare(saltedPassword, user.encrypted_password);
       if (match) {
-        return this.jwtService.sign({ email: user.email, role: user.role, authId: user.authId, isSuperAdmin: user.is_super_admin});
+         const token = this.jwtService.sign({ email: user.email, role: user.role, authId: user.authId, isSuperAdmin: user.is_super_admin});
+         return {token:token};
       } else {
-        throw new UnauthorizedException('Unauthorized');
+        throw new UnauthorizedException('Admin Password/Email is invalid');
       }
-    } catch (error) {
-      //* If the error is an UnauthorizedException, rethrow it
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-      //* Log the error and throw InternalServerErrorException for other types of errors
-      console.error(error);
-      throw new InternalServerErrorException('Failed to validate admin');
-    }
   }
 
   async validateContentEditor(email:string, password:string):Promise<string|null>{
     try{
-      const user = await this.prisma.auth.findUnique({
-        where:{
-          email:email,
-          // role:Role.CONTENT_EDITOR
-        }
-      });
+      const user = await this.findContentEditorByEmail(email);
       if(!user){
         throw new UnauthorizedException('Unauthorized')
       }
@@ -253,8 +241,11 @@ async validateUser( email:string, password:string): Promise<String | null> {
     }
   }
   
-  async changePassword(request:Request, newPassword:string,oldPassword:string):Promise<Auth|null>{
-    try{
+  async changePassword(request:Request, changePasswordDto:ChangePasswordDto){
+      const {oldPassword,newPassword} = changePasswordDto;
+      console.log(oldPassword)
+      console.log(newPassword)
+      //TODO if passsword is changed call email service to send notification to user
       const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
       const userEmail = decoded.email;
       const user = await this.findByEmail(userEmail);
@@ -268,7 +259,6 @@ async validateUser( email:string, password:string): Promise<String | null> {
         throw new UnauthorizedException('Invalid password');
       }
       
-      console.log(newPassword)
       const saltedPassword = (newPassword as string) + process.env.SALT;
       const newEncryptedPassword = await bcrypt.hash(saltedPassword, 10);
   
@@ -280,12 +270,11 @@ async validateUser( email:string, password:string): Promise<String | null> {
           encrypted_password: newEncryptedPassword
         }
       });
-  
-      return updatedUser;
-    } catch (err) {
-      console.error(err);
-      return null;
-    }
+      if(!updatedUser){
+        throw new InternalServerErrorException('Failed to update password')
+      }
+      return {message: 'Password updated'};
+     
   }
   async verifyAdminJwtTokenForGuard( request:Request){
     try{
@@ -300,23 +289,19 @@ async validateUser( email:string, password:string): Promise<String | null> {
       throw new UnauthorizedException('invalid token')
     }
   }
-  async verifyAdminToken(request:Request,Response:Response){
-    try{
-      const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
+  async verifyAdminToken(request: Request) {
+    try {
+      const token = request.headers['authorization'].split(' ')[1];
+      const decoded = this.jwtService.verify(token, { secret: process.env.SECRET_KEY });
       const isSuperAdmin = decoded.isSuperAdmin;
-      console.log(decoded.isSuperAdmin)
-      if(isSuperAdmin==false||isSuperAdmin==null||isSuperAdmin==undefined){
-        throw new UnauthorizedException('Unauthorized')
+
+      if (!isSuperAdmin) {
+        throw new UnauthorizedException('Unauthorized');
       }
-      if(decoded){
-        Response.status(200).json({
-          message:'Token is valid'
-        })
-      }
-      ;
-    }catch(error){
-      console.log(error)
-      throw new UnauthorizedException('Invalid token')
+
+      return { message: 'Token is valid' };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
     }
   }
   async refreshToken(request:Request):Promise<string|null>{
@@ -328,10 +313,19 @@ async validateUser( email:string, password:string): Promise<String | null> {
       throw new UnauthorizedException('Invalid token')
     } 
   }
-  async resendVerificationCode(email:string){
+
+  async adminRefreshToken(request:Request):Promise<string|null>{
     try{
+      const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
+      return this.jwtService.sign({email:decoded.email,role:decoded.role,authId:decoded.authId,isSuperAdmin:decoded.isSuperAdmin})
+    }catch(error){
+      console.log(error)
+      throw new UnauthorizedException('Invalid token')
+    }
+  }
+
+  async resendVerificationCode(email:string){
       const user = await this.findByEmail(email);
-      console.log(user);
       if(!user){
         throw new BadRequestException('Email not found')
       }
@@ -352,16 +346,13 @@ async validateUser( email:string, password:string): Promise<String | null> {
         throw new InternalServerErrorException('Failed to resend verification code')
       }
       await this.mailerService.sendVerificationEmail(email,emailToken)
-    }catch(error){
-      console.log(error)
-      throw new InternalServerErrorException('Failed to resend verification code')
-    }
+      return {message: 'Verification code sent'}
   }
 
 
   async requestOTP(email:string){
-    try{
       const user = await this.findByEmail(email);
+      console.log(user)
       if(!user){
         throw new BadRequestException('Email not  found')
       }
@@ -379,14 +370,10 @@ async validateUser( email:string, password:string): Promise<String | null> {
         throw new InternalServerErrorException('Failed to request OTP')
       }
       await this.mailerService.sendOTPCOde(email,otp)
-      
-    }catch(error){
-      console.log(error)
-      throw new InternalServerErrorException('Failed to request OTP')
-    }
+      return {message: 'OTP sent'}  
   }
-  async verifyOTP(otp: string, res: Response) {
-    try {
+
+  async verifyOTP(otp: string) {
       const user = await this.prisma.auth.findUnique({
         where: {
           recovery_token: otp,
@@ -396,16 +383,10 @@ async validateUser( email:string, password:string): Promise<String | null> {
       if (!user) {
         throw new BadRequestException('Invalid OTP');
       }
-
-      res.status(200).json({
-        message: 'OTP verified',
-      });
-    } catch (error) {
-      console.log(error);
-      throw new InternalServerErrorException('Failed to verify OTP');
-    }
+      return {message: 'OTP verified'};
+  
   }
-  async forgotPassword(otp:string,newPassword:string,res:Response){
+  async forgotPassword(otp:string,newPassword:string){
     const user = await  this.prisma.auth.findUnique({
       where:{
         recovery_token:otp
@@ -415,6 +396,7 @@ async validateUser( email:string, password:string): Promise<String | null> {
       throw new BadRequestException('Invalid OTP')
     }
     console.log(newPassword)
+
     const saltedPassword = (newPassword as string) + process.env.SALT;
     const newEncryptedPassword = await bcrypt.hash(saltedPassword, 10);
 
@@ -430,9 +412,7 @@ async validateUser( email:string, password:string): Promise<String | null> {
     if(!updatedUser){
       throw new InternalServerErrorException('Failed to update password')
     }
-    res.status(200).json({
-      message:'Password updated'
-    })
+    return {message: 'Password updated'}
   }
 }
 

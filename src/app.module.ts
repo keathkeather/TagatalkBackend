@@ -16,9 +16,25 @@ import { UnitModule } from './unit/unit.module';
 import { LessonModule } from './lesson/lesson.module';
 import { SkillModule } from './skill/skill.module';
 import { UserProgressModule } from './user-progress/user-progress.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
-  imports: [AuthModule, UserModule, PrismaModule, ReportModule, FeedbackModule, AdminModule, GameModule, GameAssetsModule, MailerModule, ContentEditorModule, UnitModule, LessonModule, SkillModule, UserProgressModule],
+  imports: [
+    AuthModule, 
+    UserModule, 
+    PrismaModule, 
+    ReportModule, 
+    FeedbackModule, 
+    AdminModule, 
+    GameModule, 
+    GameAssetsModule, 
+    MailerModule, 
+    ContentEditorModule, 
+    UnitModule, 
+    LessonModule, 
+    SkillModule, 
+    UserProgressModule,
+    EventEmitterModule.forRoot(),],
   controllers: [AppController],
   providers: [AppService, MailerService],
 })

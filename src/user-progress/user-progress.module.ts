@@ -12,13 +12,10 @@ import { UnitModule } from '../unit/unit.module';
 
 @Module({
   imports: [
-    forwardRef(() => GameModule),
     forwardRef(() => AuthModule),
-    forwardRef(() => LessonModule), // Add this line
-    forwardRef(() => UnitModule), // Add this line if UnitModule is necessary
   ],
   controllers: [UserProgressController],
-  providers: [UserProgressService, PrismaService, JwtService, UserService, GameService],
+  providers: [UserProgressService, PrismaService, JwtService],
   exports: [UserProgressService],
 })
 export class UserProgressModule {}

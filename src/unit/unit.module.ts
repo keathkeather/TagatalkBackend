@@ -18,16 +18,11 @@ import { UserProgressService } from '../user-progress/user-progress.service';
     PrismaService,
     SkillService,
     JwtService,
-    GameService,
-    UserService,
     UserProgressService
   ],
   controllers: [UnitController],
-  imports: [
-    forwardRef(() => LessonModule),
-    forwardRef(() => GameModule),
+  imports: [ 
     forwardRef(() => UserProgressModule),
-    forwardRef(() => AuthModule), // Add this line
   ],
   exports: [UnitService],
 })

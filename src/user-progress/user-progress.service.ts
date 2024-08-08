@@ -6,32 +6,23 @@ import { GameService } from '../game/game.service';
 import { Request,Response } from 'express';
 import { Auth, Game } from '@prisma/client';
 import { UnitService } from '../unit/unit.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class UserProgressService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    @Inject(forwardRef(()=>UserService)) private readonly userService: UserService, // Include UserService
-    @Inject(forwardRef(()=>GameService)) private readonly gameService: GameService, // Include GameService
-    @Inject(forwardRef(() => UnitService)) private readonly unitService: UnitService,
+    private eventEmitter: EventEmitter2,
   ) {}
     async addUserProgress(request:Request, gameId:string, response:Response){
         try{
             const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
-            const user = await this.userService.getUserById(decoded.authId); 
-            const game = await this.gameService.getGameByID(gameId);
-            
-            if(!game){
-                response.status(404).json('game not found');
-            }
-            if(!user){
-                throw new UnauthorizedException('user not found');
-            }
+            const userId = decoded.authId;
             const existingProgress = await this.prisma.user_Progress.findFirst({
                 where: {
-                  userId: user.userId,
-                  gameId: game.id,
+                  userId: userId,
+                  gameId: gameId,
                   isCompleted: true
                 }
               });
@@ -41,26 +32,18 @@ export class UserProgressService {
                 return;
               }
               
-            const userProgress = await this.prisma.user_Progress.updateMany({
-                where: {
-                  userId: user.userId,
-                  gameId: game.id
-                },
+            const userProgress = await this.prisma.user_Progress.create({
                 data: {
+                  userId: userId,
+                  gameId: gameId,
                   isCompleted: true
                 }
               });
-            await this.prisma.user.update({
-                where: {
-                  userId: user.userId
-                },
-                data: {
-                  userPoints: user.userPoints + game.gameValue
-                }                
-              })
               if(!userProgress){
                 throw new Error('error in adding new progress')
-            }
+              }
+              this.eventEmitter.emit('points.added',{userId:userId,points:100})
+
             response.status(200).json({
               message: 'Progress added successfully'
             });
@@ -69,39 +52,6 @@ export class UserProgressService {
             throw new InternalServerErrorException('failed to add user progress');
         }
     }
-    async addAllGamesToUserProgress(userId:string){
-        try{
-            const games = await this.gameService.getAllGames();
-            const data = games.map(game=>({
-                userId: userId,
-                gameId: game.id,
-                isCompleted:false
-            }))
-            const succesful = await this.prisma.user_Progress.createMany({
-                data:data
-            })
-            if(!succesful){
-                return new Error('error in creating game')
-            }
-            }catch(error){
-                console.log(error)
-                throw new InternalServerErrorException('error in adding all games to userprogress')
-        }
-    }
-    async getLatestCompletedLesson(request:Request){
-        try{
-            const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
-            const user = await this.userService.getUserById(decoded.authId);
-            const latestCompletedLesson = await this.prisma.user_Progress.findFirst({
-
-                
-            })
-        }catch(error){
-            console.log(error.stack)
-            throw new Error('error in getting latest completed game')
-        }
-    }
-
     async getUserProgressById(userId:string){
         try{
             const userProgress = await this.prisma.user_Progress.findMany({

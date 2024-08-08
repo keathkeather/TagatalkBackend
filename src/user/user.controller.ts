@@ -1,9 +1,11 @@
-import { Body, Controller, FileTypeValidator, Get, MaxFileSizeValidator, Param, ParseFilePipe, Post, Put, Req,Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, FileTypeValidator, Get, HttpException, HttpStatus, MaxFileSizeValidator, Param, ParseFilePipe, Post, Put, Req,Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Request,Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-@Controller('user')
+import { InvalidObjectState } from '@aws-sdk/client-s3';
+
+@Controller('v1/user')
 export class UserController {
     constructor(private userService: UserService){}
 
@@ -22,7 +24,6 @@ export class UserController {
     @Put('addUserName')
     @UseGuards(JwtAuthGuard)
     async addUsername(@Req() request:Request, @Body('name') username:string ){
-        // console.log(request, username)
         return this.userService.addUserName(request, username);
     
     }
@@ -31,19 +32,50 @@ export class UserController {
     @UseGuards(JwtAuthGuard)
     @UseInterceptors(FileInterceptor('Profile', {
         limits: {
-          fileSize: 2 * 1024 * 1024, // 2MB
+          fileSize: 2 * 1024 * 1024, // 2MB //TODO resizing the image for better performance would be recommended
         },
       }))
     async editUser(@UploadedFile() Files,@Req() request:Request, @Body('name') username:string , @Body('profileDescription') profileDescription:string ){
         return await this.userService.editUserProfile(Files,request,username,profileDescription)
-    
     }
 
     @Get('getUserData')
     @UseGuards(JwtAuthGuard)
-    async getUserData(@Req() request:Request){
-        return this.userService.getUserData(request);
+    async getUserData(@Req() request:Request,){
+        try{
+            const result = await this.userService.getUserData(request);
+            return result;
+        }catch(error){
+            throw new HttpException(error.message,HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }   
+
+    @Get('getUserRank')
+    @UseGuards(JwtAuthGuard)
+    async getUserRank(@Req() request:Request){
+        try{
+            const result = await this.userService.getUserRank(request);
+            return result;
+        }catch(error){
+            if(error instanceof BadRequestException){
+                
+                throw new HttpException(error.message,HttpStatus.BAD_REQUEST)
+            }
+            throw new HttpException(error.message,HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+    @Get('getLeaderBoard')
+    async getLeaderBoard(){
+        try{
+            const result = await this.userService.getLeaderBoard();
+            return result;
+        }catch(error){
+            if(error instanceof BadRequestException){
+                throw new HttpException(error.message,HttpStatus.BAD_REQUEST)
+            }
+            throw new HttpException(error.message,HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
     // @Post('addUserProgress')
     // @UseGuards(JwtAuthGuard)
     // async addUserProgress(@Req() request:Request, @Body('gameId') gameId: string,@Res() response:Response){

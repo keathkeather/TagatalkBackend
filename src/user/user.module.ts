@@ -18,7 +18,6 @@ import { LessonModule } from '../lesson/lesson.module';
       signOptions:{expiresIn:'1h'}
     }),
     AuthModule,
-    forwardRef(() => LessonModule), // Ensure AuthModule is imported
   ],
   providers: [
     UserService,

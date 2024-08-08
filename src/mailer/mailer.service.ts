@@ -4,8 +4,6 @@ import * as nodemailer from 'nodemailer';
 export class MailerService {
     private transporter;
     constructor() {
-        console.log(process.env.EMAIL_USER);
-        console.log(process.env.EMAIL_PASS);
         this.transporter = nodemailer.createTransport({
           service: 'Gmail',
           auth: {
@@ -15,7 +13,7 @@ export class MailerService {
         });
       }
       async sendVerificationEmail(email: string, token: string) {
-        const url = `http://localhost:3000/auth/verify/${token}`;
+        const url = `http://localhost:3000/v1/auth/verify/${token}`;
     
         await this.transporter.sendMail({
           to: email,

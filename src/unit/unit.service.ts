@@ -1,11 +1,8 @@
 import { Inject, Injectable, InternalServerErrorException, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Unit } from '@prisma/client';
 import { SkillService } from '../skill/skill.service';
 import { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from '../user/user.service';
-import { Game,Lesson } from '@prisma/client';
 import { UserProgressService } from '../user-progress/user-progress.service';
 @Injectable()
 export class UnitService {
@@ -13,7 +10,6 @@ export class UnitService {
         private readonly prisma: PrismaService,
         private readonly skillService:SkillService,
         private readonly jwtService:JwtService,
-        private readonly  userService:UserService, 
         @Inject(forwardRef(() => UserProgressService)) private readonly userProgressService: UserProgressService) {}
 
     async getAllUnits() {
@@ -86,8 +82,7 @@ export class UnitService {
         const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1], {
           secret: process.env.SECRET_KEY,
         });
-        const user = await this.userService.getUserById(decoded.authId);
-    
+        const userID = decoded.authId;
         const units = await this.prisma.unit.findMany({
           where: {
             skill: {
@@ -104,11 +99,12 @@ export class UnitService {
         });
     
         // * fetch user Progress
-        const userProgress = await this.userProgressService.getUserProgressById(user.userId);
+        console.log(userID);
+        const userProgress = await this.userProgressService.getUserProgressById(userID);
     
         // * map to get check if the game is complete
         const gameProgressMap = new Map(userProgress.map((progress) => [progress.gameId, progress.isCompleted]));
-    
+        console.log(gameProgressMap)
         for (const unit of units) {
           if (unit.lesson.length === 0) {
             // If there are no lessons, set isComplete to false
