@@ -16,7 +16,6 @@ import { AdminJwtStrategy } from './strategies/adminJwt.stategy';
     PassportModule,
     JwtModule.register({
       secret: process.env.SECRET_KEY,
-      signOptions:{expiresIn:'1h'}
     })
   ],
   providers: [AuthService,PrismaService,JwtStrategy,LocalStrategy,MailerService,adminStrategy,AdminJwtStrategy],

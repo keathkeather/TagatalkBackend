@@ -28,5 +28,12 @@ export class MailerService {
           html: `Your OTP is ${otp}`,
         });
       }
+      async sendPasswordChangeNotification(email:string ){
+        await this.transporter.sendMail({
+          to: email,
+          subject: 'Password Change Notification',
+          html: `Your Password has been changed`,
+        });
+      }
     
 }

@@ -12,7 +12,7 @@ import { GameService } from '../game/game.service';
 import { courTreeDTO } from './DTO/courseTree.dto';
 import { OnEvent } from '@nestjs/event-emitter';
 import { leaderboardDto } from './DTO/leaderboard.dto';
-
+import * as sharp from 'sharp';
 @Injectable()
 export class UserService {
     constructor(private prisma:PrismaService, private authService:AuthService,private jwtService:JwtService){}
@@ -83,62 +83,53 @@ export class UserService {
         try{
             const userId = (request.user as Auth).authId;
             const user =  await this.getUserById(userId)    
-          
+            const updateData:any ={
+                name:username || user.name,
+                profileDescription:profileDescription || user.profileDescription,
+                profileImage: user.profileImage
+            }
+            
             if(file){
-                if (user.profileImage) {
+                if(user.profileImage){
                     await this.s3.send(new DeleteObjectCommand({
                         Bucket: process.env.AWS_PROFILE_BUCKET_NAME,
-                        Key: user.profileImage,
+                        Key: user.profileImage
                     }));
                 }
-                const succesful = await this.s3.send(new PutObjectCommand({
-                    Bucket:process.env.AWS_PROFILE_BUCKET_NAME,
-                    Key:`profilePictures/${user.userId}/${file.originalname}`,
-                    Body:file.buffer,
-                    ContentDisposition: 'inline',
+                const uploadResult = await this.s3.send(new PutObjectCommand({
+                    Bucket: process.env.AWS_PROFILE_BUCKET_NAME,
+                    Key: `profilePictures/${user.userId}/${file.originalname}`,
+                    Body: file.buffer,
+                    ContentDisposition:'inline',
                     ContentType: 'image/jpeg'
-                }))
-                if(succesful){
-                    const updateData: any = {};
+                }));
                 
-                        if (username) {
-                            updateData.name = username;
-                        }
-                
-                        if (profileDescription) {
-                            updateData.profileDescription = profileDescription;
-                        }
-                
-                        updateData.profileImage = `profilePictures/${user.userId}/${file.originalname}`;
-                
-                        return this.prisma.user.update({
-                            where:{
-                                userId:user.userId
-                            },
-                            data: updateData
-                        })
+                if(uploadResult){
+                    updateData.profileImage = `profilePictures/${user.userId}/${file.originalname}`
                 }
-            }else{
-                const updateData: any = {};
-                
-                        if (username) {
-                            updateData.name = username;
-                        }
-                
-                        if (profileDescription) {
-                            updateData.profileDescription = profileDescription;
-                        }
-                
-                        updateData.profileImage = user.profileImage;
-                
-                        return this.prisma.user.update({
-                            where:{
-                                userId:user.userId
-                            },
-                            data: updateData
-                        })
-            }
 
+                const thumbnailBuffer = await sharp(file.buffer)
+                    .resize(120,120)
+                    .toBuffer(); 
+                
+                await this.s3.send(new PutObjectCommand({
+                    Bucket: process.env.AWS_PROFILE_BUCKET_NAME,
+                    Key: `profilePictures/${user.userId}/thumbnail/${file.originalname}`,
+                    Body: thumbnailBuffer,
+                    ContentDisposition:'inline',
+                    ContentType: 'image/jpeg'
+                }));
+            }
+            const succesful =  await this.prisma.user.update({
+                where:{
+                    userId:user.userId
+                },
+                data:updateData
+            })
+            if(!succesful){
+                throw new Error('failed to edit user profile')
+            }
+            return {message: 'Profile updated succesfully'}
         }catch(error){
             console.log(error.stack)
             throw new Error('Failed to edit user profile')
