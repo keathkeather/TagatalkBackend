@@ -7,9 +7,10 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+
 import { GameService } from './game.service';
 import { gameDTO } from './DTO/game.dto';
-@Controller('game')
+@Controller('v1/game')
 export class GameController {
   constructor(private readonly gameService: GameService) {}
 
@@ -38,7 +39,7 @@ export class GameController {
   async getGameByLessonNumber(
     @Param('gameLessonNumber', ParseIntPipe) gameLessonNumber: number,
   ) {
-    return this.gameService.getGameByLesson(gameLessonNumber);
+    return this.gameService.getGameByLesson(gameLessonNumber);  
   }
 
   // @Put('updateType')

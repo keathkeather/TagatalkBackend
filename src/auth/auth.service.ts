@@ -13,7 +13,12 @@ import { Role } from './enums/role.enum';
 import { ChangePasswordDto } from './DTO/changePassword.dto';
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService,private jwtService:JwtService , private mailerService:MailerService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService:JwtService , 
+    private mailerService:MailerService
+    
+  ) {}
   //* Find the user through the email (Queries the database for the user with the email provided)
   async findByEmail(email: string): Promise<Auth | null> {
       return this.prisma.auth.findUnique({
@@ -198,7 +203,7 @@ async validateUser( email:string, password:string): Promise<{token:string} | nul
       const saltedPassword = password+process.env.SALT; //* Add the salt to the password
       const match = await bcrypt.compare(saltedPassword, user.encrypted_password); //* Compare the password with the encrypted password
       if (match) {
-        const token =  this.jwtService.sign({ email: user.email ,role:user.role,authId: user.authId}); //* Signs the token with the email and role of the user
+        const token =  this.jwtService.sign({ email: user.email ,role:user.role,authId: user.authId},{expiresIn: '30d'}); //* Signs the token with the email and role of the user
         return {token:token};
       } else {
         throw new UnauthorizedException('Invalid password/email');
@@ -215,7 +220,7 @@ async validateUser( email:string, password:string): Promise<{token:string} | nul
       const saltedPassword = password + process.env.SALT;
       const match = await bcrypt.compare(saltedPassword, user.encrypted_password);
       if (match) {
-         const token = this.jwtService.sign({ email: user.email, role: user.role, authId: user.authId, isSuperAdmin: user.is_super_admin});
+         const token = this.jwtService.sign({ email: user.email, role: user.role, authId: user.authId, isSuperAdmin: user.is_super_admin},{expiresIn: '1h'});
          return {token:token};
       } else {
         throw new UnauthorizedException('Admin Password/Email is invalid');
@@ -245,7 +250,6 @@ async validateUser( email:string, password:string): Promise<{token:string} | nul
       const {oldPassword,newPassword} = changePasswordDto;
       console.log(oldPassword)
       console.log(newPassword)
-      //TODO if passsword is changed call email service to send notification to user
       const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
       const userEmail = decoded.email;
       const user = await this.findByEmail(userEmail);
@@ -273,6 +277,7 @@ async validateUser( email:string, password:string): Promise<{token:string} | nul
       if(!updatedUser){
         throw new InternalServerErrorException('Failed to update password')
       }
+      await this.mailerService.sendPasswordChangeNotification(userEmail)
       return {message: 'Password updated'};
      
   }
@@ -304,6 +309,7 @@ async validateUser( email:string, password:string): Promise<{token:string} | nul
       throw new UnauthorizedException('Invalid token');
     }
   }
+  
   async refreshToken(request:Request):Promise<string|null>{
     try{
       const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
@@ -412,6 +418,7 @@ async validateUser( email:string, password:string): Promise<{token:string} | nul
     if(!updatedUser){
       throw new InternalServerErrorException('Failed to update password')
     }
+    await this.mailerService.sendPasswordChangeNotification(user.email)
     return {message: 'Password updated'}
   }
 }
