@@ -12,6 +12,8 @@ import { AuthModule } from '../auth/auth.module';
 import { forwardRef } from '@nestjs/common';
 import { UserProgressService } from '../user-progress/user-progress.service';
 import { SkillModule } from '../skill/skill.module';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { S3Service } from '../s3/s3.service';
 describe('UnitService', () => {
   let service: UnitService;
   let module: TestingModule;
@@ -29,7 +31,8 @@ describe('UnitService', () => {
           GameService,
           UserService,
           UserProgressService,
-          SkillService
+          SkillService,{ provide: EventEmitter2, useValue: new EventEmitter2() },
+          S3Service
         ],
         imports: [
           SkillModule,

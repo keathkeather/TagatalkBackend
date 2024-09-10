@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SkillService } from '../skill/skill.service';
 import { forwardRef } from '@nestjs/common';
 import { UnitModule } from '../unit/unit.module';
+import { EventEmitter } from 'events'; // Import EventEmitter if using Node.js EventEmitter
 describe('LessonController', () => {
   let controller: LessonController;
 
@@ -14,6 +15,7 @@ describe('LessonController', () => {
         LessonService,
         PrismaService,
         SkillService,
+        { provide: EventEmitter, useValue: new EventEmitter() }
       ],
       imports: [
         forwardRef(() => UnitModule), // Ensure UnitModule is imported

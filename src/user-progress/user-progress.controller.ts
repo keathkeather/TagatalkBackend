@@ -1,4 +1,4 @@
-import { Controller, Param, Post, Req, Res } from '@nestjs/common';
+import { Controller, Get, Param, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { UserProgressService } from './user-progress.service';
 import { Request,Response } from 'express';
 
@@ -9,10 +9,19 @@ export class UserProgressController {
     
 
     @Post('create-user-progress/:gameId')
-    addUserProgress(@Req() request: Request, @Param('gameId') gameId: string, @Res() response: Response) {
-        this.userProgressService.addUserProgress(request, gameId, response);
+    addUserProgress(@Req() request: Request, @Param('gameId') gameId: string) {
+        this.userProgressService.addUserProgress(request, gameId);
     }
-    
+    @Get('getUserProgress')
+    getUserProgress(@Req() request:Request){
+        try{
+            
+        }catch(error){
+            if(error instanceof UnauthorizedException){
+                
+            }
+        }
+    }
 
 
 }

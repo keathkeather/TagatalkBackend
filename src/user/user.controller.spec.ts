@@ -10,6 +10,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthModule } from '../auth/auth.module';
 import { forwardRef } from '@nestjs/common';
 import { LessonModule } from '../lesson/lesson.module';
+import { S3Service } from '../s3/s3.service';
 describe('UserController', () => {
   let controller: UserController;
 
@@ -21,7 +22,8 @@ describe('UserController', () => {
         AuthService,
         JwtService,
         MailerService,
-        GameService
+        GameService,
+        S3Service
       ],imports:[
         PassportModule,
         JwtModule.register({

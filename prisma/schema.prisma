@@ -259,14 +259,15 @@ model User {
   isAdmin            Boolean         @default(false)
 }
 
+
 model User_Progress {
   progressId  String  @id @default(uuid()) @db.Uuid
   userId      String  @db.Uuid
-  gameId      String  @db.Uuid
+  lessonId    String  @db.Uuid
   isCompleted Boolean
   isDeleted   Boolean @default(false)
-  game        Game    @relation(fields: [gameId], references: [id])
   user        User    @relation(fields: [userId], references: [userId])
+  lesson      Lesson  @relation(fields: [lessonId], references: [id])
 }
 
 model Skill {
@@ -299,6 +300,7 @@ model Lesson {
   updatedAt    DateTime  @updatedAt
   game         Game[]
   unit         Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  userProgress User_Progress[]
 }
 
 model Game {
@@ -312,15 +314,17 @@ model Game {
   gameType     Int
   lesson       Lesson          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   gameAssets   Game_Assets[]
-  userProgress User_Progress[]
 }
 
 model Game_Assets {
   id        String    @id @default(uuid()) @db.Uuid
   gameId    String    @db.Uuid
   assetName String
+  assetClassifier String //* CHOICE / QUESTION 
   assetType String
-  fileUrl   String
+  fileUrl   String? 
+  textContent String?
+  isCorrectAnswer Boolean @default(false)
   isDeleted Boolean   @default(false)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

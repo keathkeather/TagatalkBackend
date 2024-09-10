@@ -17,6 +17,8 @@ import { LessonModule } from './lesson/lesson.module';
 import { SkillModule } from './skill/skill.module';
 import { UserProgressModule } from './user-progress/user-progress.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { S3Service } from './s3/s3.service';
+import { S3Module } from './s3/s3.module';
 
 @Module({
   imports: [
@@ -34,8 +36,9 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     LessonModule, 
     SkillModule, 
     UserProgressModule,
-    EventEmitterModule.forRoot(),],
+    EventEmitterModule.forRoot(),
+    S3Module,],
   controllers: [AppController],
-  providers: [AppService, MailerService],
+  providers: [AppService, MailerService, S3Service],
 })
 export class AppModule {}

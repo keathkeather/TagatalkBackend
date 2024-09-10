@@ -111,18 +111,6 @@ export class AuthService {
           confirmation_token:null
         }
       });
-      const games = await this.prisma.game.findMany(); //TODO change this probably 
-      const data = games.map(game=>({
-        userId: updatedUser.authId,
-        gameId: game.id,
-        isCompleted:false
-    }))
-    const succesful = await this.prisma.user_Progress.createMany({
-        data:data
-    })
-    if(!succesful){
-        return new Error('error in creating game')
-    }
       if(!updatedUser){
         throw new InternalServerErrorException('Failed to verify email')
       }
