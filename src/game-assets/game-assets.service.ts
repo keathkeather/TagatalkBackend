@@ -1,184 +1,180 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Res } from '@nestjs/common';
-import { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3 } from '@aws-sdk/client-s3';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, Res } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Readable } from 'stream';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { Game,Game_Assets } from '@prisma/client';
-import { GameService } from 'src/game/game.service';
-import { Response } from 'express';
+import { GameService } from '../game/game.service';
+import { gameAssetDTO } from './DTO/game-asset.dto';
+import { S3Service } from '../s3/s3.service';
+import { textAssetArray, textAssetDto } from './DTO/text-asset-dto';
+import { fileAssetArray, fileAssetDto } from './DTO/file-asset-dto';
 @Injectable()
 export class GameAssetsService {
-    constructor(private readonly prisma:PrismaService,private readonly gameService:GameService){}    
-
-    private s3 = new S3({
-        region: process.env.AWS_S3_REGION,
-        credentials:{
-            accessKeyId:process.env.AWS_ACCES_KEY,
-            secretAccessKey:process.env.AWS_SECRET_ACCESS_KEY
+    logger: Logger;
+    constructor(private readonly prisma:PrismaService,private readonly gameService:GameService,private s3Service:S3Service){
+        this.logger = new Logger('GameAssetsService');
+    }    
+  
+    async uploadGameAssets(files: Record<string, Express.Multer.File[]>, gameId: string, gameAssetDto: gameAssetDTO) {
+        const game = await this.gameService.getGameByID(gameId);
+        const { assetType, textContent, assetClassifier, isCorrectAnswer } = gameAssetDto;
+    
+        if (!game) {
+            throw new BadRequestException('Game not found');
         }
-    })
-
-    async uploadGameAssets(files: Record<string, Express.Multer.File[]>, gameId: string) {
-            const game =  await this.gameService.getGameByID(gameId);
-            
-            if(!game){
-                throw new BadRequestException('Game not found')
-            }
-
-            const allFiles = Object.values(files).flat();
-            try {
-                await Promise.all(allFiles.map(async (file) => {
-                    const uploadResult = await this.s3.send(new PutObjectCommand({
-                        Bucket: process.env.AWS_GAME_ASSET_TESTING,
-                        Key: `gameAssets/${gameId}/${file.originalname}`,
-                        Body: file.buffer,
-                    }));
-        
-                    if (!uploadResult) {
-                        throw new InternalServerErrorException('Failed to upload game asset to S3');
+    
+        const allFiles = Object.values(files).flat();
+        const textAssets = Array.isArray(textContent) ? textContent : [];
+        const numFiles = allFiles.length;
+        const numTextAssets = textAssets.length;
+    
+        try {
+            //* Process files
+            await Promise.all(
+                allFiles.map(async (file, index) => {
+                    const currentAssetType = assetType?.[index] ?? file.originalname.split('.').pop();
+                    const currentAssetClassifier = assetClassifier?.[index] ?? null;
+                    let currentIsCorrectAnswer: boolean;
+                    if (Array.isArray(isCorrectAnswer)) {
+                        //* If isCorrectAnswer is an array, get the value by index
+                        const value = isCorrectAnswer[index];
+                        currentIsCorrectAnswer = value === 'true' || value === true;
+                    } else {
+                        //* If isCorrectAnswer is not an array, convert to boolean
+                        currentIsCorrectAnswer = isCorrectAnswer === 'true' 
                     }
-                    //* Save file details to the database
+                    //*Upload the file to S3
+                    await this.s3Service.uploadGameFile(file, process.env.AWS_GAME_ASSET_TESTING, gameId);
+    
+                    //*Save file details to the database
                     await this.prisma.game_Assets.create({
                         data: {
                             gameId: gameId,
                             assetName: file.originalname,
-                            assetType: file.originalname.split('.').pop(),
+                            assetClassifier: currentAssetClassifier,
+                            assetType: currentAssetType,
                             fileUrl: `gameAssets/${gameId}/${file.originalname}`,
+                            isCorrectAnswer: currentIsCorrectAnswer,
                         },
                     });
-                }));
-            } catch (error) {
-                console.error('Error uploading files:', error);
-                throw new InternalServerErrorException('Failed to upload game assets');
-            }
-    }
-    //TODO update
-    async deleteGameAsset(filename:string, gameId){
-        try{
-            const result = await this.s3.send(new DeleteObjectCommand({
-                Bucket:process.env.AWS_BUCKET_NAME,
-                Key:'gameAssets/1/1.png',
-            }))
-            //TODO delete properly from db wihtout getting the id
-            if(result){
-                await this.prisma.game_Assets.delete({
-                    where:{
-                        id:"asdasdasd",
-                        gameId : gameId,
-                        assetName:filename
-                    }
                 })
-            }else{
-                throw new InternalServerErrorException('Failed to delete game asset')
-            }
-        }catch(error){
-            console.log(error.stack)
-            throw new InternalServerErrorException('Failed to delete game asset')
-        }
-    }
-    async listGameAssets(gameId: string): Promise<string[]> {
-        try {
-          const command = new ListObjectsV2Command({
-            Bucket: process.env.AWS_BUCKET_NAME,
-            Prefix: `gameAssets/${gameId}/`,
-          });
+            );
     
-          const result = await this.s3.send(command);
-          return result.Contents.map(item => item.Key);
+            //* Process text assets
+            await Promise.all(
+                textAssets.map(async (content, index) => {
+                    const currentAssetClassifier = assetClassifier?.[numFiles + index] ?? 'text';
+                    let currentIsCorrectAnswer: boolean;
+                    if (Array.isArray(isCorrectAnswer)) {
+                        //* If isCorrectAnswer is an array, get the value by index
+                        const value = isCorrectAnswer[index];
+                        currentIsCorrectAnswer = value === 'true' || value === true;
+                    } else {
+                        //* If isCorrectAnswer is not an array, convert to boolean
+                        currentIsCorrectAnswer = isCorrectAnswer === 'true' 
+                    }  
+                    //**  Save text asset details to the database
+                    await this.prisma.game_Assets.create({
+                        data: {
+                            gameId: gameId,
+                            assetName: `textAsset${index + 1}`,
+                            assetClassifier: currentAssetClassifier,
+                            assetType: 'text',
+                            textContent: content,
+                            isCorrectAnswer: currentIsCorrectAnswer,
+                        },
+                    });
+                })
+            );
         } catch (error) {
-          console.error('Error listing game assets:', error);
-          throw new InternalServerErrorException('Failed to list game assets');
+            this.logger.error('Error uploading game assets:', error);
+            throw new InternalServerErrorException('Failed to upload game assets');
         }
     }
-
-    //TODO get all assets in the db -> for all game assets in db return url
-    async getGameAsset(key: string):Promise<string>{
-        try {
-            const getObjectParams = {
-                Bucket: process.env.AWS_BUCKET_NAME,
-                Key: key
+    
+    
+    async deleteGameAsset(assetId:string){
+            const asset = await this.prisma.game_Assets.findUnique({
+                where:{
+                    id:assetId
+                }
+            })
+            if(!asset){
+                throw new BadRequestException('Asset not found')
             }
-          const command = new GetObjectCommand(getObjectParams) 
-          const result = await this.s3.send(command);
-          const url = await getSignedUrl(this.s3,command,{expiresIn:3600})
-          console.log(url)
-          return url
-        } catch (error) {
-          console.error('Error fetching game asset:', error);
-          throw new InternalServerErrorException('Failed to get game asset');
-        } 
-      }
+            if(asset.fileUrl){
+                await this.s3Service.deleteObject(process.env.AWS_GAME_ASSET_TESTING,asset.fileUrl)
+            }
+            await this.prisma.game_Assets.delete({
+                where:{
+                    id:asset.id
+                }
+            })
+    }
+ 
 
-    async updateGameAsset(gameId:string,key:string,file: Express.Multer.File,res:Response){
+
+
+    async updateGameAsset(gameId:string,assetId:string,file: Express.Multer.File){
         try{    
             const game  = await this.gameService.getGameByID(gameId);
-            if(!game){
-                res.status(404).json({
-                    message: "Game not found"
-                })
-            }
-            if(file){
-                await this.s3.send(new DeleteObjectCommand({
-                    Bucket:process.env.AWS_BUCKET_NAME,
-                    Key: key
-                }))
-
-                const succesfulUpload = await this.s3.send(new PutObjectCommand({
-                    Bucket:process.env.AWS_BUCKET_NAME,
-                    Key:`gameAssets/${gameId}/${file.originalname}`,
-                    Body:file.buffer,
-                    ContentDisposition:'inline'
-                }))
-                if(!succesfulUpload){
-                    throw new InternalServerErrorException('failed to upload')
+            const asset = await this.prisma.game_Assets.findUnique({
+                where:{
+                    id:assetId
                 }
-                res.status(204).json({
-                    message:'asset succesfully updated'
+            })
+            if(file){
+                await this.s3Service.uploadGameFile(file,process.env.AWS_GAME_ASSET_TESTING,gameId)
+                await this.prisma.game_Assets.update({
+                    where:{
+                        id:assetId
+                    },
+                    data:{
+                        assetName: file.originalname,
+                        assetType: file.originalname.split('.').pop(),
+                        fileUrl:`gameAssets/${gameId}/${file.originalname}`
+                    }
                 })
+                
+                
             }
         }catch(error){
             console.log(error)
             throw new InternalServerErrorException('failed to updae asset')
         }
     }
-    async getGameAssetByGameId(){
-
-    }
-    async getAllGamesAssets(gameId:string){
-        try{
-            const game = await this.prisma.game.findUnique({
-                where:{
-                    id:gameId
-                }
-            })
-            if(!game){
-                throw new Error('Game not found')
+    async fetchAllAssets(gameId:string){
+        const assets = await this.prisma.game_Assets.findMany({
+            where:{
+                gameId:gameId
             }
+        })
+        const fileAssets:fileAssetArray = [];
+        const textAssets:textAssetArray = [];
 
-            const assets = await this.prisma.game_Assets.findMany({
-                where:{
-                    gameId: game.id
+        for(const asset of assets){
+            if(asset.fileUrl){
+                const downloadUrl = await this.s3Service.getSignedUrl(process.env.AWS_GAME_ASSET_TESTING,asset.fileUrl)
+                const fileAsset:fileAssetDto = {
+                    assetId:asset.id,
+                    assetClassifier:asset.assetClassifier,
+                    assetType:asset.assetType,
+                    filename:asset.assetName,
+                    fileUrl: downloadUrl,
+                    isCorrectAnswer:asset.isCorrectAnswer,
                 }
-            })
-            const urls={}
-            await Promise.all(assets.map(async (asset, index) => {
-                const getObjectParams = {
-                  Bucket: process.env.AWS_BUCKET_NAME,
-                  Key: asset.fileUrl
-                }
-                const command = new GetObjectCommand(getObjectParams)
-                const url = await getSignedUrl(this.s3,command,{expiresIn:3600})
-                urls[`url${index}`] = url; // Add each URL to the urls object
-              }));
-            return urls
-        }catch(error){
-            console.log(error)
-            throw new InternalServerErrorException('failed to get game assets`')
+                fileAssets.push(fileAsset)
+            }
+            else if(asset.textContent){
+                    const textAsset:textAssetDto = {
+                        assetId:asset.id,
+                        assetClassifier:asset.assetClassifier,
+                        assetName:asset.assetName,
+                        assetType:asset.assetType,
+                        isCorrectAnswer:asset.isCorrectAnswer
+                    }
+                    textAssets.push(textAsset)
+            }
+        }
+        return {
+            fileAssets,textAssets
         }
     }
- 
-    
-    
-
-
 }

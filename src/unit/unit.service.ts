@@ -4,6 +4,7 @@ import { SkillService } from '../skill/skill.service';
 import { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { UserProgressService } from '../user-progress/user-progress.service';
+import { filter } from 'rxjs';
 @Injectable()
 export class UnitService {
     constructor(
@@ -76,66 +77,103 @@ export class UnitService {
             throw new InternalServerErrorException('Error while fetching unit')
         }
     }
+    async getCourseTree(request:Request , skillName:string){
+      const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
+      const userId = decoded.authId;
+      
+      const units = await this.prisma.unit.findMany({
+        where:{
+          skill:{
+            skillName:skillName
+          }
+        },
+        include:{
+          lesson:{}
+        }
+      })
+      const userProgress = await this.userProgressService.getUserProgressById(userId);
+      const lessonProgressMap = new Map(userProgress.map((progress) => [progress.lessonId, progress.isCompleted]));
+      let showNextUnit = true;
+      const filteredUnits = [];
+      for(const unit of units){
+        if(unit.lesson.length === 0){
+          unit['isComplete'] = false;
+          continue;
+        }
+        
+        for(const lesson of unit.lesson){
+          lesson['isComplete'] = lessonProgressMap.get(lesson.id) === true;
+        }
 
-    async getCourseTree(request: Request, skillName: string) {
-      try {
-        const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1], {
-          secret: process.env.SECRET_KEY,
-        });
-        const userID = decoded.authId;
-        const units = await this.prisma.unit.findMany({
-          where: {
-            skill: {
-              skillName: skillName,
-            },
-          },
-          include: {
-            lesson: {
-              include: {
-                game: true,
-              },
-            },
-          },
-        });
-    
-        // * fetch user Progress
-        console.log(userID);
-        const userProgress = await this.userProgressService.getUserProgressById(userID);
-    
-        // * map to get check if the game is complete
-        const gameProgressMap = new Map(userProgress.map((progress) => [progress.gameId, progress.isCompleted]));
-        console.log(gameProgressMap)
-        for (const unit of units) {
-          if (unit.lesson.length === 0) {
-            // If there are no lessons, set isComplete to false
-            unit['isComplete'] = false;
-            continue;
-          }
-    
-          for (const lesson of unit.lesson) {
-            const allGamesComplete = lesson.game.every((game) => gameProgressMap.get(game.id) === true);
-            lesson['isComplete'] = allGamesComplete;
-          }
-    
-          const allLessonsComplete = unit.lesson.every((lesson) => lesson['isComplete'] === true);
-          unit['isComplete'] = allLessonsComplete;
+        const allLessonsComplete = unit.lesson.every((lesson) => lesson['isComplete'] === true);
+        unit['isComplete'] = allLessonsComplete;
+        if(unit['isComplete']||showNextUnit){
+          filteredUnits.push(unit);
+          showNextUnit = unit['isComplete'];
         }
-    
-        const filteredUnits = [];
-        let showNextUnit = true;
-        for (const unit of units) {
-          if (unit['isComplete'] || showNextUnit) {
-            filteredUnits.push(unit);
-            showNextUnit = unit['isComplete'];
-          }
-        }
-    
-        return filteredUnits;
-      } catch (error) {
-        console.log(error);
-        throw new InternalServerErrorException('Error while fetching course tree');
       }
+      
+        return filteredUnits;
     }
+    // async getCourseTree(request: Request, skillName: string) {
+    //   try {
+    //     const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1], {
+    //       secret: process.env.SECRET_KEY,
+    //     });
+    //     const userID = decoded.authId;
+    //     const units = await this.prisma.unit.findMany({
+    //       where: {
+    //         skill: {
+    //           skillName: skillName,
+    //         },
+    //       },
+    //       include: {
+    //         lesson: {
+    //           include: {
+    //             game: true,
+    //           },
+    //         },
+    //       },
+    //     });
+    
+    //     // * fetch user Progress
+    //     console.log(userID);
+    //     const userProgress = await this.userProgressService.getUserProgressById(userID);
+    
+    //     // * map to get check if the game is complete
+    //     const gameProgressMap = new Map(userProgress.map((progress) => [progress.gameId, progress.isCompleted]));
+    //     console.log(gameProgressMap)
+    //     for (const unit of units) {
+    //       if (unit.lesson.length === 0) {
+    //         // If there are no lessons, set isComplete to false
+    //         unit['isComplete'] = false;
+    //         continue;
+    //       }
+    
+    //       for (const lesson of unit.lesson) {
+    //         const allGamesComplete = lesson.game.every((game) => gameProgressMap.get(game.id) === true);
+    //         lesson['isComplete'] = allGamesComplete;
+    //       }
+    
+    //       const allLessonsComplete = unit.lesson.every((lesson) => lesson['isComplete'] === true);
+    //       unit['isComplete'] = allLessonsComplete;
+    //     }
+    
+    //     const filteredUnits = [];
+    //     let showNextUnit = true;
+    //     for (const unit of units) {
+    //       if (unit['isComplete'] || showNextUnit) {
+    //         filteredUnits.push(unit);
+    //         showNextUnit = unit['isComplete'];
+    //       }
+    //     }
+    
+    //     return filteredUnits;
+    //   } catch (error) {
+    //     console.log(error);
+    //     throw new InternalServerErrorException('Error while fetching course tree');
+    //   }
+    // }
     
     
 }

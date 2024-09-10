@@ -12,10 +12,11 @@ describe('GameController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [GameController],providers:[GameService,PrismaService,LessonService],imports: [
-        forwardRef(() => LessonModule),
-        forwardRef(() => UnitModule), // Ensure UnitModule is imported
-      ],
+      controllers: [GameController],providers:[GameService,PrismaService,LessonService],
+      // imports: [
+      //   forwardRef(() => LessonModule),
+      //   forwardRef(() => UnitModule), // Ensure UnitModule is imported
+      // ],
     }).compile();
 
     controller = module.get<GameController>(GameController);

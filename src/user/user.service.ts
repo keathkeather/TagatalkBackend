@@ -6,24 +6,15 @@ import { AuthService } from '../auth/auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { DeleteObjectCommand, GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, S3 } from '@aws-sdk/client-s3';
 import { userDto } from './DTO/user.dto';
-import { S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { GameService } from '../game/game.service';
-import { courTreeDTO } from './DTO/courseTree.dto';
 import { OnEvent } from '@nestjs/event-emitter';
 import { leaderboardDto } from './DTO/leaderboard.dto';
 import * as sharp from 'sharp';
+import { S3Service } from '../s3/s3.service';
 @Injectable()
 export class UserService {
-    constructor(private prisma:PrismaService, private authService:AuthService,private jwtService:JwtService){}
+    constructor(private prisma:PrismaService, private authService:AuthService,private jwtService:JwtService,private s3Service:S3Service){}
 
-    private s3 = new S3({
-        region: process.env.AWS_S3_REGION,
-        credentials:{
-            accessKeyId:process.env.AWS_ACCES_KEY,
-            secretAccessKey:process.env.AWS_SECRET_ACCESS_KEY
-        }
-    })
    
     async getAllUser():Promise<User[]|null>{
         try{
@@ -37,7 +28,8 @@ export class UserService {
             const user = await this.prisma.user.findUnique({
                 where:{
                     userId:id
-                }
+                },
+                
             })
             if(!user){
                 return null
@@ -48,6 +40,7 @@ export class UserService {
             throw new Error('failed to get user by id')
         }
     }
+  
     async getUserByEmail(email:string):Promise<User|null>{
         try{
             return this.prisma.user.findUnique({
@@ -83,6 +76,7 @@ export class UserService {
         try{
             const userId = (request.user as Auth).authId;
             const user =  await this.getUserById(userId)    
+        
             const updateData:any ={
                 name:username || user.name,
                 profileDescription:profileDescription || user.profileDescription,
@@ -91,34 +85,12 @@ export class UserService {
             
             if(file){
                 if(user.profileImage){
-                    await this.s3.send(new DeleteObjectCommand({
-                        Bucket: process.env.AWS_PROFILE_BUCKET_NAME,
-                        Key: user.profileImage
-                    }));
+                    await this.s3Service.deleteObject(process.env.AWS_PROFILE_BUCKET_NAME,user.profileImage);
+                    const thumbnail = user.profileImage.replace(`${user.userId}`, `${user.userId}/thumbnail`);
+                    await this.s3Service.deleteObject(process.env.AWS_PROFILE_BUCKET_NAME,thumbnail);
                 }
-                const uploadResult = await this.s3.send(new PutObjectCommand({
-                    Bucket: process.env.AWS_PROFILE_BUCKET_NAME,
-                    Key: `profilePictures/${user.userId}/${file.originalname}`,
-                    Body: file.buffer,
-                    ContentDisposition:'inline',
-                    ContentType: 'image/jpeg'
-                }));
-                
-                if(uploadResult){
-                    updateData.profileImage = `profilePictures/${user.userId}/${file.originalname}`
-                }
-
-                const thumbnailBuffer = await sharp(file.buffer)
-                    .resize(120,120)
-                    .toBuffer(); 
-                
-                await this.s3.send(new PutObjectCommand({
-                    Bucket: process.env.AWS_PROFILE_BUCKET_NAME,
-                    Key: `profilePictures/${user.userId}/thumbnail/${file.originalname}`,
-                    Body: thumbnailBuffer,
-                    ContentDisposition:'inline',
-                    ContentType: 'image/jpeg'
-                }));
+                await this.s3Service.uploadProfileImage(file,userId,process.env.AWS_PROFILE_BUCKET_NAME);
+                updateData.profileImage = `profilePictures/${user.userId}/${file.originalname}`;   
             }
             const succesful =  await this.prisma.user.update({
                 where:{
@@ -135,13 +107,14 @@ export class UserService {
             throw new Error('Failed to edit user profile')
         }
     }
+
     async getUserData(request:Request){
         const decoded = this.jwtService.verify(request.headers['authorization'].split(' ')[1],{ secret: process.env.SECRET_KEY });
         const user = await this.getUserById(decoded.authId); 
         if(!user){
             throw new BadRequestException('user not found')
         }
-
+        
         if(user.profileImage === null){
             const userDTO: userDto={
                 userId:user.userId,
@@ -153,20 +126,17 @@ export class UserService {
             return userDTO;
         }
 
-        const getObjectParams = {
-            Bucket: process.env.AWS_PROFILE_BUCKET_NAME,
-            Key: user.profileImage,
-        }
-        const command = new GetObjectCommand(getObjectParams)
-        const url = await getSignedUrl(this.s3,command,{expiresIn:3600})
-        console.log(url)
+        const profileUrl = await this.s3Service.getSignedUrl(process.env.AWS_PROFILE_BUCKET_NAME,user.profileImage);
+
+        //TODO might want to add userThumbnail to userDTO ask for resolution
         const userDTO: userDto={
             userId:user.userId,
             email:user.email,
             name:user.name,
-            profileImage:url,
+            profileImage:profileUrl,
             profileDescription:user.profileDescription
         }
+
         return userDTO;
     }
     

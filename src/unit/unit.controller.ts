@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
 import { UnitService } from './unit.service';
 import { Request } from 'express';
 
-@Controller('unit')
+@Controller('/unit')
 export class UnitController {
     constructor(private unitService:UnitService) {}
 

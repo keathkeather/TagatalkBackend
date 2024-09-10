@@ -5,12 +5,13 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from '../auth/auth.service';
 import { MailerService } from '../mailer/mailer.service';
 import { GameService } from '../game/game.service';
+import { S3Service } from '../s3/s3.service';
 describe('UserService', () => {
   let service: UserService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UserService,PrismaService,JwtService,AuthService,MailerService],
+      providers: [UserService,PrismaService,JwtService,AuthService,MailerService,S3Service],
     }).compile();
 
     service = module.get<UserService>(UserService);
