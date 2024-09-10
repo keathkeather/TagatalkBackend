@@ -15,11 +15,13 @@ export class S3Service {
 
     async uploadGameFile(file:Express.Multer.File,bucket:string,gameId:string){
        try{
+            const mimetype= file.mimetype
             await this.s3.send(new PutObjectCommand({
                 Bucket:bucket,
                 Key:`gameAssets/${gameId}/${file.originalname}`,
                 Body:file.buffer,
-                ContentDisposition: 'inline'
+                ContentDisposition: 'inline',
+                ContentType:mimetype
             }))
        }catch(error){
             throw new InternalServerErrorException('Failed to upload game file')
