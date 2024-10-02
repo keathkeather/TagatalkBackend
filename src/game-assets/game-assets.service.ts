@@ -168,6 +168,7 @@ export class GameAssetsService {
                         assetClassifier:asset.assetClassifier,
                         assetName:asset.assetName,
                         assetType:asset.assetType,
+                        textContent:asset.textContent,
                         isCorrectAnswer:asset.isCorrectAnswer
                     }
                     textAssets.push(textAsset)

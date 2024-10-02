@@ -3,6 +3,7 @@ export class textAssetDto{
     assetClassifier:string
     assetName:string;
     assetType:string;
+    textContent:string;
     isCorrectAnswer:boolean;
 }
 
