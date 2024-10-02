@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { UnitService } from './unit.service';
 import { Request } from 'express';
-
+import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 @Controller('/unit')
 export class UnitController {
     constructor(private unitService:UnitService) {}
@@ -17,6 +17,7 @@ export class UnitController {
     }
 
     @Get('courseTree/:skillName')
+    @UseGuards(JwtAuthGuard)
     async getCourseTree(@Param('skillName') skillName:string,@Req() request:Request){
         return this.unitService.getCourseTree(request, skillName);
     }
