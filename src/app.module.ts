@@ -19,6 +19,7 @@ import { UserProgressModule } from './user-progress/user-progress.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { S3Service } from './s3/s3.service';
 import { S3Module } from './s3/s3.module';
+import { SpeechToTextModule } from './speech-to-text/speech-to-text.module';
 
 @Module({
   imports: [
@@ -37,7 +38,8 @@ import { S3Module } from './s3/s3.module';
     SkillModule, 
     UserProgressModule,
     EventEmitterModule.forRoot(),
-    S3Module,],
+    S3Module,
+    SpeechToTextModule,],
   controllers: [AppController],
   providers: [AppService, MailerService, S3Service],
 })
