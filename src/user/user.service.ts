@@ -171,14 +171,27 @@ export class UserService {
             },
             take:10
         })
-        const leaderboardArray: leaderboardDto[] = leaderboard.map((user,index) => ({
-            userId: user.userId,
-            email: user.email,
-            name: user.name,
-            userPoints:user.userPoints,
-            rank: index+1
-        }));
-    
+        
+        const leaderboardArray: leaderboardDto[] = [];
+        for (const [index, user] of leaderboard.entries()) {
+            const userId = user.userId;
+            let thumbnailUrl: string;
+            if(user.profileImage){
+                const originalProfileImage = user.profileImage;
+                const thumbnailProfileImage = originalProfileImage.replace(`profilePictures/${userId}/`, `profilePictures/${userId}/thumbnail/`);
+                thumbnailUrl = await this.s3Service.getSignedUrl(process.env.AWS_PROFILE_BUCKET_NAME,thumbnailProfileImage);
+            }else{
+                thumbnailUrl = '';
+            }
+
+            leaderboardArray.push({
+                userId: user.userId,
+                userProfileImage: thumbnailUrl,
+                name: user.name,
+                userPoints:user.userPoints,
+                rank: index+1
+            });
+        }
         return leaderboardArray;
               
     }
