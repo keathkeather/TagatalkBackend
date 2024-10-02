@@ -5,8 +5,11 @@ import { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { UserProgressService } from '../user-progress/user-progress.service';
 import { filter } from 'rxjs';
+import { GameAssetsService } from 'src/game-assets/game-assets.service';
 @Injectable()
 export class UnitService {
+    @Inject()
+    private gameAssetService:GameAssetsService
     constructor(
         private readonly prisma: PrismaService,
         private readonly skillService:SkillService,
@@ -88,7 +91,11 @@ export class UnitService {
           }
         },
         include:{
-          lesson:{}
+          lesson:{
+            include:{
+              game:true
+            }
+          }
         }
       })
       const userProgress = await this.userProgressService.getUserProgressById(userId);
@@ -103,12 +110,17 @@ export class UnitService {
         
         for(const lesson of unit.lesson){
           lesson['isComplete'] = lessonProgressMap.get(lesson.id) === true;
+          for(const game of lesson.game){
+            game['isComplete'] = lessonProgressMap.get(game.id) === true;
+            game['gameAssets'] = await this.gameAssetService.fetchAllAssets(game.id);
+          }
         }
 
         const allLessonsComplete = unit.lesson.every((lesson) => lesson['isComplete'] === true);
         unit['isComplete'] = allLessonsComplete;
         if(unit['isComplete']||showNextUnit){
           filteredUnits.push(unit);
+          
           showNextUnit = unit['isComplete'];
         }
       }

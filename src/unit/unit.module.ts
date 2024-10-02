@@ -13,6 +13,7 @@ import { AuthModule } from '../auth/auth.module'; // Import AuthModule
 import { UserProgressService } from '../user-progress/user-progress.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { S3Service } from '../s3/s3.service';
+import { GameAssetsService } from 'src/game-assets/game-assets.service';
 
 @Module({
   providers: [
@@ -22,7 +23,9 @@ import { S3Service } from '../s3/s3.service';
     JwtService,
     UserProgressService,
     { provide: EventEmitter2, useValue: new EventEmitter2() },
-    S3Service
+    S3Service,
+    GameAssetsService,
+    GameService,
   ],
   controllers: [UnitController],
   imports: [ 
