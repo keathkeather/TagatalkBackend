@@ -5,6 +5,7 @@ import { gameAssetDTO } from './DTO/game-asset.dto';
 import { S3Service } from '../s3/s3.service';
 import { textAssetArray, textAssetDto } from './DTO/text-asset-dto';
 import { fileAssetArray, fileAssetDto } from './DTO/file-asset-dto';
+import { gameAssetsDto } from './DTO/game-assets-dto';
 @Injectable()
 export class GameAssetsService {
     logger: Logger;
@@ -140,7 +141,7 @@ export class GameAssetsService {
             throw new InternalServerErrorException('failed to updae asset')
         }
     }
-    async fetchAllAssets(gameId:string){
+    async fetchAllAssets(gameId:string):Promise<gameAssetsDto>{
         const assets = await this.prisma.game_Assets.findMany({
             where:{
                 gameId:gameId
@@ -154,7 +155,6 @@ export class GameAssetsService {
                 const downloadUrl = await this.s3Service.getSignedUrl(process.env.AWS_GAME_ASSET_TESTING,asset.fileUrl)
                 const fileAsset:fileAssetDto = {
                     assetId:asset.id,
-                    gameId:asset.gameId,
                     assetClassifier:asset.assetClassifier,
                     assetType:asset.assetType,
                     filename:asset.assetName,
@@ -166,7 +166,6 @@ export class GameAssetsService {
             else if(asset.textContent){
                     const textAsset:textAssetDto = {
                         assetId:asset.id,
-                        gameId:asset.gameId,
                         assetClassifier:asset.assetClassifier,
                         assetName:asset.assetName,
                         assetType:asset.assetType,
@@ -176,8 +175,13 @@ export class GameAssetsService {
                     textAssets.push(textAsset)
             }
         }
-        return {
-            fileAssets,textAssets
+
+        const gameAssets:gameAssetsDto = {
+            gameId:gameId,
+            fileAssets:fileAssets,
+            textAssets:textAssets
         }
+        return gameAssets
+        
     }
 }

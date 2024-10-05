@@ -1,6 +1,5 @@
 export class textAssetDto{
     assetId:string;
-    gameId:string;
     assetClassifier:string
     assetName:string;
     assetType:string;
