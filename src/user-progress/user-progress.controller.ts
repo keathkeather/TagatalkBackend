@@ -2,15 +2,15 @@ import { Controller, Get, Param, Post, Req, Res, UnauthorizedException } from '@
 import { UserProgressService } from './user-progress.service';
 import { Request,Response } from 'express';
 
-@Controller('user-progress')
+@Controller('v1/user-progress')
 export class UserProgressController {
 
     constructor(private userProgressService: UserProgressService) { }
     
 
-    @Post('create-user-progress/:gameId')
-    addUserProgress(@Req() request: Request, @Param('gameId') gameId: string) {
-        this.userProgressService.addUserProgress(request, gameId);
+    @Post('create-user-progress/:lessonId')
+    addUserProgress(@Req() request: Request, @Param('lessonId') lessonId: string) {
+        this.userProgressService.addUserProgress(request, lessonId);
     }
     @Get('getUserProgress')
     getUserProgress(@Req() request:Request){

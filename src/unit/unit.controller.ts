@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/comm
 import { UnitService } from './unit.service';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
-@Controller('/unit')
+@Controller('v1/unit')
 export class UnitController {
     constructor(private unitService:UnitService) {}
 
