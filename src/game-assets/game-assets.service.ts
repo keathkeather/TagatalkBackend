@@ -15,17 +15,19 @@ export class GameAssetsService {
   
     async uploadGameAssets(files: Record<string, Express.Multer.File[]>, gameId: string, gameAssetDto: gameAssetDTO) {
         const game = await this.gameService.getGameByID(gameId);
+        this.logger.log('gameAssetDto:', gameAssetDto);
         const { assetType, textContent, assetClassifier, isCorrectAnswer } = gameAssetDto;
     
         if (!game) {
             throw new BadRequestException('Game not found');
         }
-    
+        this.logger.log('textContent:', textContent);
+        this.logger.log('Uploading game assets');
         const allFiles = Object.values(files).flat();
-        const textAssets = Array.isArray(textContent) ? textContent : [];
+        const textAssets = Array.isArray(textContent) ? textContent : [textContent]; // Ensure textContent is always an array
         const numFiles = allFiles.length;
         const numTextAssets = textAssets.length;
-    
+        this.logger.log('textAssets:', textAssets);
         try {
             //* Process files
             await Promise.all(
@@ -65,13 +67,21 @@ export class GameAssetsService {
                     let currentIsCorrectAnswer: boolean;
                     if (Array.isArray(isCorrectAnswer)) {
                         //* If isCorrectAnswer is an array, get the value by index
-                        const value = isCorrectAnswer[index];
+                        const value = isCorrectAnswer[numFiles + index];
                         currentIsCorrectAnswer = value === 'true' || value === true;
                     } else {
                         //* If isCorrectAnswer is not an array, convert to boolean
-                        currentIsCorrectAnswer = isCorrectAnswer === 'true' 
-                    }  
-                    //**  Save text asset details to the database
+                        currentIsCorrectAnswer = typeof isCorrectAnswer === 'string' ? isCorrectAnswer === 'true' : isCorrectAnswer === true;
+                    }
+
+                    // Debug logging
+                    this.logger.debug(`Processing text asset ${index + 1}:`, {
+                        content,
+                        currentAssetClassifier,
+                        currentIsCorrectAnswer,
+                    });
+
+                    //* Save text asset details to the database
                     await this.prisma.game_Assets.create({
                         data: {
                             gameId: gameId,
