@@ -68,7 +68,7 @@ export class GameAssetsService {
                         }
     
                         // * Upload the file to S3
-                        await this.s3Service.uploadGameFile(file, process.env.AWS_GAME_ASSET_TESTING, gameId);
+                        await this.s3Service.uploadGameFile(file, process.env.AWS_BUCKET_NAME, gameId);
     
                         // * Save file details to the database
                         await this.prisma.game_Assets.create({
@@ -158,7 +158,7 @@ export class GameAssetsService {
                 throw new BadRequestException('Asset not found')
             }
             if(asset.fileUrl){
-                await this.s3Service.deleteObject(process.env.AWS_GAME_ASSET_TESTING,asset.fileUrl)
+                await this.s3Service.deleteObject(process.env.AWS_BUCKET_NAME,asset.fileUrl)
             }
             await this.prisma.game_Assets.delete({
                 where:{
@@ -179,7 +179,7 @@ export class GameAssetsService {
                 }
             })
             if(file){
-                await this.s3Service.uploadGameFile(file,process.env.AWS_GAME_ASSET_TESTING,gameId)
+                await this.s3Service.uploadGameFile(file,process.env.AWS_BUCKET_NAME,gameId)
                 await this.prisma.game_Assets.update({
                     where:{
                         id:assetId
@@ -209,7 +209,7 @@ export class GameAssetsService {
 
         for(const asset of assets){
             if(asset.fileUrl){
-                const downloadUrl = await this.s3Service.getSignedUrl(process.env.AWS_GAME_ASSET_TESTING,asset.fileUrl)
+                const downloadUrl = await this.s3Service.getSignedUrl(process.env.AWS_BUCKET_NAME,asset.fileUrl)
                 const fileAsset:fileAssetDto = {
                     assetId:asset.id,
                     assetClassifier:asset.assetClassifier,
