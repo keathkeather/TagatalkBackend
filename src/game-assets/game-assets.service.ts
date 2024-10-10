@@ -30,70 +30,66 @@ export class GameAssetsService {
         this.logger.log('textAssets:', textAssets);
         try {
             //* Process files
-            await Promise.all(
-                allFiles.map(async (file, index) => {
-                    const currentAssetType = assetType?.[index] ?? file.originalname.split('.').pop();
-                    const currentAssetClassifier = assetClassifier?.[index] ?? null;
-                    let currentIsCorrectAnswer: boolean;
-                    if (Array.isArray(isCorrectAnswer)) {
-                        //* If isCorrectAnswer is an array, get the value by index
-                        const value = isCorrectAnswer[index];
-                        currentIsCorrectAnswer = value === 'true' || value === true;
-                    } else {
-                        //* If isCorrectAnswer is not an array, convert to boolean
-                        currentIsCorrectAnswer = isCorrectAnswer === 'true' 
-                    }
-                    //*Upload the file to S3
-                    await this.s3Service.uploadGameFile(file, process.env.AWS_GAME_ASSET_TESTING, gameId);
-    
-                    //*Save file details to the database
-                    await this.prisma.game_Assets.create({
-                        data: {
-                            gameId: gameId,
-                            assetName: file.originalname,
-                            assetClassifier: currentAssetClassifier,
-                            assetType: currentAssetType,
-                            fileUrl: `gameAssets/${gameId}/${file.originalname}`,
-                            isCorrectAnswer: currentIsCorrectAnswer,
-                        },
-                    });
-                })
-            );
+            if(numFiles > 0){
+                await Promise.all(
+                    allFiles.map(async (file, index) => {
+                        const currentAssetType = assetType?.[index] ?? file.originalname.split('.').pop();
+                        const currentAssetClassifier = assetClassifier?.[index] ?? null;
+                        let currentIsCorrectAnswer: boolean;
+                        if (Array.isArray(isCorrectAnswer)) {
+                            //* If isCorrectAnswer is an array, get the value by index
+                            const value = isCorrectAnswer[index];
+                            currentIsCorrectAnswer = value === 'true' || value === true;
+                        } else {
+                            //* If isCorrectAnswer is not an array, convert to boolean
+                            currentIsCorrectAnswer = isCorrectAnswer === 'true' 
+                        }
+                        //*Upload the file to S3
+                        await this.s3Service.uploadGameFile(file, process.env.AWS_GAME_ASSET_TESTING, gameId);
+        
+                        //*Save file details to the database
+                        await this.prisma.game_Assets.create({
+                            data: {
+                                gameId: gameId,
+                                assetName: file.originalname,
+                                assetClassifier: currentAssetClassifier,
+                                assetType: currentAssetType,
+                                fileUrl: `gameAssets/${gameId}/${file.originalname}`,
+                                isCorrectAnswer: currentIsCorrectAnswer,
+                            },
+                        });
+                    })
+                );
+            }
     
             //* Process text assets
-            await Promise.all(
-                textAssets.map(async (content, index) => {
-                    const currentAssetClassifier = assetClassifier?.[numFiles + index] ?? 'text';
-                    let currentIsCorrectAnswer: boolean;
-                    if (Array.isArray(isCorrectAnswer)) {
-                        //* If isCorrectAnswer is an array, get the value by index
-                        const value = isCorrectAnswer[numFiles + index];
-                        currentIsCorrectAnswer = value === 'true' || value === true;
-                    } else {
-                        //* If isCorrectAnswer is not an array, convert to boolean
-                        currentIsCorrectAnswer = typeof isCorrectAnswer === 'string' ? isCorrectAnswer === 'true' : isCorrectAnswer === true;
-                    }
-
-                    // Debug logging
-                    this.logger.debug(`Processing text asset ${index + 1}:`, {
-                        content,
-                        currentAssetClassifier,
-                        currentIsCorrectAnswer,
-                    });
-
-                    //* Save text asset details to the database
-                    await this.prisma.game_Assets.create({
-                        data: {
-                            gameId: gameId,
-                            assetName: `textAsset${index + 1}`,
-                            assetClassifier: currentAssetClassifier,
-                            assetType: 'text',
-                            textContent: content,
-                            isCorrectAnswer: currentIsCorrectAnswer,
-                        },
-                    });
-                })
-            );
+           if(numTextAssets > 0 && textAssets[0] !==null && textAssets[0] !== undefined){
+                await Promise.all(
+                    textAssets.map(async (textContent, index) => {
+                        const currentAssetType = assetType?.[index + numFiles] ?? 'text';
+                        const currentAssetClassifier = assetClassifier?.[index + numFiles] ?? null;
+                        let currentIsCorrectAnswer: boolean;
+                        if (Array.isArray(isCorrectAnswer)) {
+                            //* If isCorrectAnswer is an array, get the value by index
+                            const value = isCorrectAnswer[index + numFiles];
+                            currentIsCorrectAnswer = value === 'true' || value === true;
+                        } else {
+                            //* If isCorrectAnswer is not an array, convert to boolean
+                            currentIsCorrectAnswer = isCorrectAnswer === 'true';
+                        }
+                        await this.prisma.game_Assets.create({
+                            data: {
+                                gameId: gameId,
+                                assetName: 'text',
+                                assetClassifier: currentAssetClassifier,
+                                assetType: currentAssetType,
+                                textContent: textContent,
+                                isCorrectAnswer: currentIsCorrectAnswer,
+                            },
+                        });
+                    })
+                );
+            }
         } catch (error) {
             this.logger.error('Error uploading game assets:', error);
             throw new InternalServerErrorException('Failed to upload game assets');
