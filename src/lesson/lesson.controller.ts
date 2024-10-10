@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { LessonService } from './lesson.service';
 
-@Controller('lesson')
+@Controller('v1/lesson')
 export class LessonController { 
     constructor(private lessonService:LessonService) {}
 
