@@ -86,6 +86,7 @@ export class GameAssetsService {
             }
     
             // * Process text assets
+            // Process text assets
             if (numTextAssets > 0 && textAssets[0] !== null && textAssets[0] !== undefined) {
                 await Promise.all(
                     textAssets.map(async (textContent, index) => {
@@ -96,35 +97,37 @@ export class GameAssetsService {
                         } else {
                             currentAssetType = assetType || 'null'; // Handle single string value
                         }
-    
+
                         // Handle assetClassifier
                         let currentAssetClassifier: string;
                         if (Array.isArray(assetClassifier)) {
-                            currentAssetClassifier = assetClassifier[index + numFiles] || 'default-classifier';
+                            currentAssetClassifier = assetClassifier[index] || 'default-classifier'; // Use index directly for text assets
                         } else {
                             currentAssetClassifier = assetClassifier || 'default-classifier'; // Handle single string value
                         }
-    
+
                         // Handle isCorrectAnswer
                         let currentIsCorrectAnswer: boolean;
                         if (Array.isArray(isCorrectAnswer)) {
-                            const value = isCorrectAnswer[index + numFiles];
+                            const value = isCorrectAnswer[index];
                             currentIsCorrectAnswer = value === 'true' || value === true;
                         } else {
                             currentIsCorrectAnswer = isCorrectAnswer === 'false' ? false : true; // Handle single value
                         }
-    
+
+                        const assetName = `textAsset${index + 1 + numFiles}`; // Ensure unique asset names
                         // Log details for debugging
                         this.logger.log('textContent:', textContent);
+                        this.logger.log('assetName:', assetName);
                         this.logger.log('currentAssetClassifier:', currentAssetClassifier);
                         this.logger.log('currentAssetType:', currentAssetType);
                         this.logger.log('currentIsCorrectAnswer:', currentIsCorrectAnswer);
-    
+
                         // Save text details to the database
                         await this.prisma.game_Assets.create({
                             data: {
                                 gameId: gameId,
-                                assetName: 'text',
+                                assetName: assetName,
                                 assetClassifier: currentAssetClassifier,
                                 assetType: 'text',
                                 textContent: textContent,
@@ -133,7 +136,8 @@ export class GameAssetsService {
                         });
                     })
                 );
-            }
+}
+
         } catch (error) {
             this.logger.error('Error uploading game assets:', error);
             throw new InternalServerErrorException('Failed to upload game assets');
