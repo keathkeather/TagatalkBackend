@@ -5,7 +5,7 @@ import { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { UserProgressService } from '../user-progress/user-progress.service';
 import { filter } from 'rxjs';
-import { GameAssetsService } from 'src/game-assets/game-assets.service';
+import { GameAssetsService } from '../game-assets/game-assets.service';
 @Injectable()
 export class UnitService {
     @Inject()
