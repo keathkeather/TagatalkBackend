@@ -4,7 +4,6 @@ export type fileAssetArray = fileAssetDto[];
 export type textAssetArray = textAssetDto[];
 
 export class gameAssetsDto {
-    gameId: string;
     fileAssets: fileAssetArray;
     textAssets: textAssetArray;
 }

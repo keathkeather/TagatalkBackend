@@ -177,7 +177,6 @@ export class GameAssetsService {
         }
 
         const gameAssets:gameAssetsDto = {
-            gameId:gameId,
             fileAssets:fileAssets,
             textAssets:textAssets
         }
