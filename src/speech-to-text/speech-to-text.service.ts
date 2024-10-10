@@ -3,6 +3,8 @@ import OpenAI from 'openai';
 
 @Injectable()
 export class SpeechToTextService {
+   OpenAI = require('openai');
+
   private openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   async processAudioFile(file: Express.Multer.File) {

@@ -14,6 +14,7 @@ import { AuthModule } from '../auth/auth.module';
 import { UserProgressService } from '../user-progress/user-progress.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { S3Service } from '../s3/s3.service';
+import { GameAssetsService } from '../game-assets/game-assets.service';
 describe('UnitController', () => {
   let controller: UnitController;
 
@@ -28,7 +29,8 @@ describe('UnitController', () => {
         UserService,
         UserProgressService,
         { provide: EventEmitter2, useValue: new EventEmitter2() },
-        S3Service
+        S3Service,
+        GameAssetsService
       ],
       imports: [
         forwardRef(() => LessonModule),

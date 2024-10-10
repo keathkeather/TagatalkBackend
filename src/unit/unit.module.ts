@@ -13,7 +13,7 @@ import { AuthModule } from '../auth/auth.module'; // Import AuthModule
 import { UserProgressService } from '../user-progress/user-progress.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { S3Service } from '../s3/s3.service';
-import { GameAssetsService } from 'src/game-assets/game-assets.service';
+import { GameAssetsService } from '../game-assets/game-assets.service';
 
 @Module({
   providers: [
