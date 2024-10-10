@@ -1,11 +1,10 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Unit } from '@prisma/client';
-import { UnitService } from '../unit/unit.service';
+
 
 @Injectable()
 export class LessonService {
-    constructor(private prisma:PrismaService , @Inject(forwardRef(() => UnitService)) private unitService: UnitService) {}
+    constructor(private prisma:PrismaService ){}
 
     async getAllLessons(){
         return this.prisma.lesson.findMany();
@@ -26,21 +25,14 @@ export class LessonService {
             throw new Error('Error while fetching lesson')
         }
     }
-    async createLesson(lessonName:string,unitNumber:number,skillName:string){
+    async createLesson(lessonName:string,unitId:string){
         try{
-            const unit = await this.unitService.getUnitByUnitNumber(unitNumber,skillName);
-            if(!unit){
-                throw new Error('Unit not found')
-            }
+            
             const maxLessonNumber = await this.prisma.lesson.findMany({
                 take:1,
                 where:{
-                    unitId:unit.id,
-                    unit:{
-                        skill:{
-                            skillName:skillName
-                        }
-                    }
+                    unitId:unitId
+                   
                 },
                 orderBy:{
                     lessonNumber:'desc'
@@ -53,7 +45,7 @@ export class LessonService {
             const lesson = await this.prisma.lesson.create({
                 data:{
                     lessonName:lessonName,
-                    unitId:unit.id,
+                    unitId:unitId,
                     lessonNumber:newLessonNumber
                 }
             })

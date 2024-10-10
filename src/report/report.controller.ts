@@ -4,7 +4,7 @@ import { reportDto } from './DTO/report.dto';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 
-@Controller('report')
+@Controller('v1/report')
 export class ReportController {
     constructor(private reportService: ReportService) {}
 

@@ -9,16 +9,16 @@ import { GameModule } from '../game/game.module'; // Import GameModule
 import { AuthModule } from '../auth/auth.module'; // Import AuthModule
 import { LessonModule } from '../lesson/lesson.module'; // Import LessonModule
 import { UnitModule } from '../unit/unit.module';
-
+import { LessonService } from '../lesson/lesson.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 @Module({
   imports: [
-    forwardRef(() => GameModule),
     forwardRef(() => AuthModule),
-    forwardRef(() => LessonModule), // Add this line
-    forwardRef(() => UnitModule), // Add this line if UnitModule is necessary
   ],
   controllers: [UserProgressController],
-  providers: [UserProgressService, PrismaService, JwtService, UserService, GameService],
-  exports: [UserProgressService],
+  providers: [UserProgressService, PrismaService, JwtService,LessonService, {
+    provide: EventEmitter2,
+    useValue: new EventEmitter2(), // Register EventEmitter2 here
+  },]
 })
 export class UserProgressModule {}

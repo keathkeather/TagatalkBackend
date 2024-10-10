@@ -9,6 +9,7 @@ import { PassportModule } from '@nestjs/passport';
 import { GameService } from '../game/game.service'; // Add this import
 import { AuthModule } from '../auth/auth.module'; // Add this import
 import { LessonModule } from '../lesson/lesson.module';
+import { S3Service } from '../s3/s3.service';
 
 @Module({
   imports:[
@@ -18,7 +19,6 @@ import { LessonModule } from '../lesson/lesson.module';
       signOptions:{expiresIn:'1h'}
     }),
     AuthModule,
-    forwardRef(() => LessonModule), // Ensure AuthModule is imported
   ],
   providers: [
     UserService,
@@ -26,7 +26,8 @@ import { LessonModule } from '../lesson/lesson.module';
     AuthService,
     JwtService,
     MailerService,
-    GameService
+    GameService,
+    S3Service
   ],
   controllers: [UserController],
   exports: [UserService],

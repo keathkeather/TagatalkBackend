@@ -4,8 +4,6 @@ import * as nodemailer from 'nodemailer';
 export class MailerService {
     private transporter;
     constructor() {
-        console.log(process.env.EMAIL_USER);
-        console.log(process.env.EMAIL_PASS);
         this.transporter = nodemailer.createTransport({
           service: 'Gmail',
           auth: {
@@ -15,7 +13,7 @@ export class MailerService {
         });
       }
       async sendVerificationEmail(email: string, token: string) {
-        const url = `http://localhost:3000/auth/verify/${token}`;
+        const url = `http://${process.env.VERIFICATION_IP}:3000/v1/auth/verify/${token}`;
     
         await this.transporter.sendMail({
           to: email,
@@ -28,6 +26,13 @@ export class MailerService {
           to: email,
           subject: 'OTP Verification',
           html: `Your OTP is ${otp}`,
+        });
+      }
+      async sendPasswordChangeNotification(email:string ){
+        await this.transporter.sendMail({
+          to: email,
+          subject: 'Password Change Notification',
+          html: `Your Password has been changed`,
         });
       }
     

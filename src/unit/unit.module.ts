@@ -11,6 +11,9 @@ import { LessonModule } from '../lesson/lesson.module';
 import { GameModule } from '../game/game.module';
 import { AuthModule } from '../auth/auth.module'; // Import AuthModule
 import { UserProgressService } from '../user-progress/user-progress.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { S3Service } from '../s3/s3.service';
+import { GameAssetsService } from '../game-assets/game-assets.service';
 
 @Module({
   providers: [
@@ -18,16 +21,15 @@ import { UserProgressService } from '../user-progress/user-progress.service';
     PrismaService,
     SkillService,
     JwtService,
+    UserProgressService,
+    { provide: EventEmitter2, useValue: new EventEmitter2() },
+    S3Service,
+    GameAssetsService,
     GameService,
-    UserService,
-    UserProgressService
   ],
   controllers: [UnitController],
-  imports: [
-    forwardRef(() => LessonModule),
-    forwardRef(() => GameModule),
+  imports: [ 
     forwardRef(() => UserProgressModule),
-    forwardRef(() => AuthModule), // Add this line
   ],
   exports: [UnitService],
 })

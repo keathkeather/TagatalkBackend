@@ -7,7 +7,7 @@ import { LessonService } from '../lesson/lesson.service';
 @Injectable()
 export class GameService {
 
-    constructor(private readonly prisma:PrismaService , @Inject(forwardRef(()=> LessonService))private lessonService: LessonService){}
+    constructor(private readonly prisma:PrismaService ){}
     async getGameByID(gameId:string):Promise<Game|null>{
         try{
             const game = await this.prisma.game.findUnique({
@@ -29,12 +29,11 @@ export class GameService {
                 gameType,
                 gameValue
             } = gameDTO;
-            const lesson = await this.lessonService.getLessonById(lessonId);
             const newGame = await this.prisma.game.create({
                 data:{
                     gameType:gameType,
                     gameValue:gameValue,
-                    lessonId:lesson.id
+                    lessonId:lessonId
                 } 
                 
             })

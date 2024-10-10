@@ -5,7 +5,7 @@ import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 
-@Controller('feedback')
+@Controller('v1/feedback')
 export class FeedbackController {
     constructor(private feedbackService: FeedbackService) {}
 

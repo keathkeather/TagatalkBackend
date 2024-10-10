@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { LessonService } from './lesson.service';
 
-@Controller('lesson')
+@Controller('v1/lesson')
 export class LessonController { 
     constructor(private lessonService:LessonService) {}
 
@@ -11,8 +11,8 @@ export class LessonController {
         return this.lessonService.getAllLessons();
     }
 
-    @Post('createLesson/:skillName/:unitNumber')
-    async createLesson(@Body('lessonName') lessonName:string,@Param('skillName') skillName:string,@Param('unitNumber',ParseIntPipe) unitNumber:number){
-        return this.lessonService.createLesson(lessonName,unitNumber,skillName);
+    @Post('createLesson/:unitId')
+    async createLesson(@Body('lessonName') lessonName:string,@Param('unitId') unitId:string ){
+        return this.lessonService.createLesson(lessonName,unitId);
     }
 }
