@@ -22,19 +22,23 @@ export class GameAssetsService {
             throw new BadRequestException('Game not found');
         }
         this.logger.log('textContent:', textContent);
+        this.logger.log('gameId:', gameId);
         this.logger.log('Uploading game assets');
         const allFiles = Object.values(files).flat();
         const textAssets = Array.isArray(textContent) ? textContent : [textContent]; // Ensure textContent is always an array
         const numFiles = allFiles.length;
         const numTextAssets = textAssets.length;
         this.logger.log('textAssets:', textAssets);
+        this.logger.log('assetClassifier:', assetClassifier); // Log assetClassifier for debugging
         try {
             //* Process files
-            if(numFiles > 0){
+            if (numFiles > 0) {
                 await Promise.all(
                     allFiles.map(async (file, index) => {
                         const currentAssetType = assetType?.[index] ?? file.originalname.split('.').pop();
-                        const currentAssetClassifier = assetClassifier?.[index] ?? null;
+                        const currentAssetClassifier = Array.isArray(assetClassifier)
+                            ? assetClassifier[index] // Ensure correct handling of the array
+                            : assetClassifier; // Single value if not an array
                         let currentIsCorrectAnswer: boolean;
                         if (Array.isArray(isCorrectAnswer)) {
                             //* If isCorrectAnswer is an array, get the value by index
@@ -42,11 +46,11 @@ export class GameAssetsService {
                             currentIsCorrectAnswer = value === 'true' || value === true;
                         } else {
                             //* If isCorrectAnswer is not an array, convert to boolean
-                            currentIsCorrectAnswer = isCorrectAnswer === 'true' 
+                            currentIsCorrectAnswer = isCorrectAnswer === 'true';
                         }
                         //*Upload the file to S3
                         await this.s3Service.uploadGameFile(file, process.env.AWS_GAME_ASSET_TESTING, gameId);
-        
+    
                         //*Save file details to the database
                         await this.prisma.game_Assets.create({
                             data: {
@@ -63,11 +67,13 @@ export class GameAssetsService {
             }
     
             //* Process text assets
-           if(numTextAssets > 0 && textAssets[0] !==null && textAssets[0] !== undefined){
+            if (numTextAssets > 0 && textAssets[0] !== null && textAssets[0] !== undefined) {
                 await Promise.all(
                     textAssets.map(async (textContent, index) => {
-                        const currentAssetType = assetType?.[index + numFiles] ?? 'text';
-                        const currentAssetClassifier = assetClassifier?.[index + numFiles] ?? null;
+                        const currentAssetType = assetType?.[index + numFiles] ?? 'null';
+                        const currentAssetClassifier = Array.isArray(assetClassifier)
+                            ? assetClassifier[index + numFiles] // Adjust index for text assets
+                            : assetClassifier;
                         let currentIsCorrectAnswer: boolean;
                         if (Array.isArray(isCorrectAnswer)) {
                             //* If isCorrectAnswer is an array, get the value by index
@@ -95,6 +101,7 @@ export class GameAssetsService {
             throw new InternalServerErrorException('Failed to upload game assets');
         }
     }
+    
     
     
     async deleteGameAsset(assetId:string){
