@@ -10,6 +10,7 @@ import { GameService } from '../game/game.service'; // Add this import
 import { AuthModule } from '../auth/auth.module'; // Add this import
 import { LessonModule } from '../lesson/lesson.module';
 import { S3Service } from '../s3/s3.service';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports:[
@@ -19,6 +20,7 @@ import { S3Service } from '../s3/s3.service';
       signOptions:{expiresIn:'1h'}
     }),
     AuthModule,
+    EventEmitterModule
   ],
   providers: [
     UserService,
