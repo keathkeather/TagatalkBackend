@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; 
 import { Auth, User,Game,User_Progress } from '@prisma/client';
 import { Request,Response } from 'express';
@@ -13,7 +13,11 @@ import * as sharp from 'sharp';
 import { S3Service } from '../s3/s3.service';
 @Injectable()
 export class UserService {
-    constructor(private prisma:PrismaService, private authService:AuthService,private jwtService:JwtService,private s3Service:S3Service){}
+    logger: Logger;
+
+    constructor(private prisma:PrismaService, private authService:AuthService,private jwtService:JwtService,private s3Service:S3Service){
+        this.logger = new Logger('userService');
+    }
 
    
     async getAllUser():Promise<User[]|null>{
@@ -140,10 +144,14 @@ export class UserService {
         return userDTO;
     }
     
-    @OnEvent('points.added')
+    @OnEvent('ADDPOINTS')
     async addUserPoints({userId,points}:{userId:string,points:number}){
         try{
+            this.logger.log('running the event')
+            this.logger.log(userId)
+            this.logger.log(points)
             const user = await this.getUserById(userId);
+
             if(!user){
                 throw new Error('user not found')
             }
