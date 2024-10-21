@@ -2,11 +2,10 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { PrismaService } from '../prisma/prisma.service'; 
 import { Auth, User } from '@prisma/client';
 import { AuthService } from '../auth/auth.service';
-import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util';
 import { Role } from '../enum/role.enum';
 import { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
-import { decode } from 'punycode';
+
 @Injectable()
 export class AdminService {
     constructor(private prisma:PrismaService,private authService:AuthService,private jwtService:JwtService){}
@@ -433,6 +432,185 @@ export class AdminService {
             throw Error;
         }
     }
+    async addLoginSummmary(periodType: 'DAY' | 'WEEK' | 'MONTH', periodStart:Date,periodEnd:Date, loginCount:number,){
+        await this.prisma.loginSummary.create({
+            data:{
+                periodType:periodType,
+                loginCount:loginCount,
+                periodStart:periodStart,
+                periodEnd:periodEnd
+            }
+        })
+    }
 
+
+
+    async createLoginSummary(periodType: 'DAY' | 'WEEK' | 'MONTH') {
+        const now = new Date();
+        let periodStart: Date;
+        let periodEnd: Date;
+    
+        //* Calculate periodStart based on the period type
+        switch (periodType) {
+            case 'DAY':
+                periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); //* Midnight of today
+                periodEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999); //* End of today
+                break;
+            case 'WEEK':
+                periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                periodStart.setDate(now.getDate() - 7); // 7 days ago
+                periodEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999); //* End of today
+                break;
+            case 'MONTH':
+                periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                periodStart.setMonth(now.getMonth() - 1); // 1 month ago
+                periodEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999); //* End of today
+                break;
+            default:
+                throw new Error('Invalid period type');
+        }
+    
+        const loginCount = await this.prisma.user.count({
+            where: {
+                lastLogin: {
+                    gte: periodStart,
+                    lte: periodEnd,
+                },
+                isAdmin:false,
+            },
+        });
+    
+        await this.addLoginSummary(periodType, periodStart, periodEnd, loginCount);
+    }
+    
+    async addLoginSummary(periodType: 'DAY' | 'WEEK' | 'MONTH', periodStart: Date, periodEnd: Date, loginCount: number) {
+        await this.prisma.loginSummary.create({
+            data: {
+                periodType,
+                periodStart,
+                periodEnd,
+                loginCount,
+            },
+        });
+    }
+    async getLoginSummary(periodType: 'DAY' | 'WEEK' | 'MONTH') {
+        return this.prisma.loginSummary.findMany({
+          where: {
+            periodType: periodType, // Filter by period type
+          },
+          orderBy: {
+            periodStart: 'asc', // Order by period start for chronological graphing
+          },
+          select: {
+            periodStart: true,
+            loginCount: true,
+          },
+          take:30
+        });
+      }
+      async createProgressSummary() {
+        const now = new Date();
+        const currentDate = new Date();
+        const startOfWeek = new Date(currentDate);
+        const endOfWeek = new Date(currentDate);
+
+        // Set the start of the week to Sunday (or Monday based on your preference)
+        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay()); // Sunday
+        startOfWeek.setHours(0, 0, 0, 0); // Start of the day
+        endOfWeek.setDate(startOfWeek.getDate() + 6); // End of the week
+        endOfWeek.setHours(23, 59, 59, 999); // End of the day
+        
+        try{
+            const progressCount = await this.prisma.user_Progress.count({
+                where: {
+                    isCompleted:true,
+                    updatedAt:{
+                        gte:startOfWeek,
+                        lte:endOfWeek
+                    }
+                },
+            });
+            console.log(progressCount)
+            await this.addProgressSummary(currentDate, progressCount);
+            return { userCount: progressCount };
+
+        }catch(Error ){
+            console.log(Error)
+            throw new Error('failed to get progress count')
+        }
+       
+    }
+    async addProgressSummary(date: Date, progressCount: number) {
+        await this.prisma.progressSummary.create({
+            data: {
+                date,
+                progressCount,
+            },
+        });
+    }
+    async getProgressSummary() {
+        const currentDate = new Date();
+        const startOfWeek = new Date(currentDate);
+        const endOfWeek = new Date(currentDate);
+    
+        // Calculate the start and end of the week
+        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay()); // Sunday
+        startOfWeek.setHours(0, 0, 0, 0); // Start of the day
+        endOfWeek.setDate(startOfWeek.getDate() + 6); // End of the week
+        endOfWeek.setHours(23, 59, 59, 999); // End of the day
+    
+        return this.prisma.progressSummary.findMany({
+            where: {
+                date: {
+                    gte: startOfWeek,
+                    lte: endOfWeek,
+                },
+            },
+            orderBy: {
+                date: 'asc',
+            },
+            select: {
+                date: true,
+                progressCount: true,
+            },
+        });
+    }
+    async getWeeklyProgressCountPerSkill(): Promise<{ [skillName: string]: { progressCount: number } }> {
+        const skills = ['READING', 'WRITING', 'LISTENING', 'SPEAKING'];
+        const progressCounts = {};
+    
+        const currentDate = new Date();
+        const startOfWeek = new Date(currentDate);
+        const endOfWeek = new Date(currentDate);
+    
+        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay()); //* Sunday
+        startOfWeek.setHours(0, 0, 0, 0); //* Start of the day
+        endOfWeek.setDate(startOfWeek.getDate() + 6); //* End of the week
+        endOfWeek.setHours(23, 59, 59, 999); //* End of the day
+    
+        for (const skill of skills) {
+          const completedCount = await this.prisma.user_Progress.count({
+            where: {
+              lesson: {
+                unit: {
+                    skill:{
+                        skillName:skill
+                    },
+                },
+              },
+              isCompleted: true,
+              updatedAt: {
+                gte: startOfWeek,
+                lte: endOfWeek,
+              },
+            },
+          });
+    
+          progressCounts[skill] = { progressCount: completedCount };
+        }
+    
+        return progressCounts;
+      }
+    
 }
 

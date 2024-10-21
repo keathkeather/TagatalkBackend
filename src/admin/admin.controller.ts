@@ -1,10 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { adminGuard } from '../auth/guards/admin.guard';
 import { adminJwtGuard } from '../auth/guards/adminJwt.guard';
-@Controller('admin')
+@Controller('v1/admin')
 export class AdminController {
     constructor(private adminService: AdminService) {}
     @Get('users')
@@ -108,6 +108,35 @@ export class AdminController {
     async unbanUsers(request:Request) {
         return  this.adminService.handleUserUnban(request);
     }
+
+    @Post('createLoginSummary/:period')
+    async createLoginSummary(@Param('period') period: 'DAY' | 'WEEK' | 'MONTH') {
+      return this.adminService.createLoginSummary(period);
+    }
+    @Get('fetchLoginSummary/:period')
+    @UseGuards(adminJwtGuard)
+    async fetchLoginSummary(@Param('period') period: 'DAY' | 'WEEK' | 'MONTH') {
+      return this.adminService.getLoginSummary(period);
+    }
+
+    @Get('getProgressSumary')
+    @UseGuards(adminJwtGuard)
+    async getProgressSummary(){
+        return this.adminService.getProgressSummary();
+    }
+
+    @Post('createProgressSummary')
+    async createProgressSummary() {
+      return this.adminService.createProgressSummary();
+    }
+
+    @Get('getWeeklyProgressCountPerSkill')
+    @UseGuards(adminJwtGuard)
+    async getWeeklyProgressCountPerSkill(){
+        return this.adminService.getWeeklyProgressCountPerSkill();
+    }
+   
+
 
 
 

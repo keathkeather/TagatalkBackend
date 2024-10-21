@@ -11,8 +11,10 @@ import { UserService } from 'src/user/user.service';
 import { GameService } from 'src/game/game.service';
 import { adminStrategy } from './strategies/admin.strategy';
 import { AdminJwtStrategy } from './strategies/adminJwt.stategy';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 @Module({
   imports:[
+    EventEmitterModule.forRoot(),
     PassportModule,
     JwtModule.register({
       secret: process.env.SECRET_KEY,

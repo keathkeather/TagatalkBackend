@@ -44,8 +44,7 @@ export class UserProgressService {
           this.logger.log('emitting the event')
           this.logger.log(userId, 'userId', 'points', 100)
           this.logger.log('Before emitting the event');
-        
-            this.eventEmitter.emit('ADDPOINTS', { userId: userId, points: 100 });
+          this.eventEmitter.emit('ADDPOINTS', { userId: userId, points: 100 });
           this.logger.log('After emitting the event');
           
           return {message:"User Progress added successfully"};
