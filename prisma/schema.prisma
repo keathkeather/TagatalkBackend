@@ -257,7 +257,8 @@ model User {
   auth               Auth            @relation(fields: [userId], references: [authId])
   userProgress       User_Progress[]
   isAdmin            Boolean         @default(false)
-}
+  lastLogin          DateTime?      
+} 
 
 
 model User_Progress {
@@ -268,6 +269,7 @@ model User_Progress {
   isDeleted   Boolean @default(false)
   user        User    @relation(fields: [userId], references: [userId])
   lesson      Lesson  @relation(fields: [lessonId], references: [id])
+  updatedAt  DateTime? @updatedAt 
 }
 
 model Skill {
@@ -372,6 +374,23 @@ model Notification_setting {
   emailNotifEnabled Boolean
   pushNotifEnabled  Boolean
   Notification      Notification?
+}
+
+model LoginSummary{
+ id           Int      @id @default(autoincrement())
+  periodType   String  
+  periodStart  DateTime 
+  periodEnd    DateTime 
+  loginCount   Int      
+  createdAt    DateTime @default(now()) 
+  updatedAt    DateTime @updatedAt
+}
+model ProgressSummary {
+  id           Int      @id @default(autoincrement())
+  date         DateTime
+  progressCount Int     
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 enum aal_level {
