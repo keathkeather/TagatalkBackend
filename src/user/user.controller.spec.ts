@@ -11,6 +11,7 @@ import { AuthModule } from '../auth/auth.module';
 import { forwardRef } from '@nestjs/common';
 import { LessonModule } from '../lesson/lesson.module';
 import { S3Service } from '../s3/s3.service';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 describe('UserController', () => {
   let controller: UserController;
 
@@ -32,6 +33,7 @@ describe('UserController', () => {
         }),
         AuthModule,
         forwardRef(() => LessonModule), // Ensure AuthModule is imported
+        EventEmitterModule.forRoot(),
       ]
     }).compile();
 
