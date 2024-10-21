@@ -5,8 +5,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from '../auth/auth.service';
 import {MailerService} from '../mailer/mailer.service';
 import { JwtService } from '@nestjs/jwt';
-import { AuthModule } from '../auth/auth.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 @Module({
+  imports:[EventEmitterModule.forRoot()],
+
   controllers: [AdminController],
   providers: [AdminService,PrismaService,AuthService,JwtService,MailerService]
 })
