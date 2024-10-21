@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; 
 import { Auth,Game } from '@prisma/client';
 import { RegisterDto } from './DTO/register.dto';
@@ -11,13 +11,15 @@ import * as crypto from 'crypto';
 import { MailerService } from '../mailer/mailer.service';
 import { Role } from './enums/role.enum';
 import { ChangePasswordDto } from './DTO/changePassword.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService:JwtService , 
-    private mailerService:MailerService
-    
+    private mailerService:MailerService,
+    @Inject(forwardRef(() => EventEmitter2))
+    private readonly eventEmitter: EventEmitter2,
   ) {}
   //* Find the user through the email (Queries the database for the user with the email provided)
   async findByEmail(email: string): Promise<Auth | null> {
@@ -164,10 +166,22 @@ async generateAdminAccount(registerDto:RegisterDto){
         email,
         encrypted_password:hashedPassword,
         role:Role.ADMIN,
-        is_super_admin:true
+        is_super_admin:true,
+      },
+      include:{
+        user:true
       }
+      
     });
-    if(!newUser){
+    const updated =await this.prisma.user.update({
+      where:{
+        userId:newUser.authId
+      },
+      data:{
+        isAdmin:true,
+      }
+    })
+    if(!newUser && !updated){
       throw new InternalServerErrorException('Failed to create admin account')
     }
     return {message: 'Admin account created'}
@@ -192,6 +206,7 @@ async validateUser( email:string, password:string): Promise<{token:string} | nul
       const match = await bcrypt.compare(saltedPassword, user.encrypted_password); //* Compare the password with the encrypted password
       if (match) {
         const token =  this.jwtService.sign({ email: user.email ,role:user.role,authId: user.authId},{expiresIn: '30d'}); //* Signs the token with the email and role of the user
+        this.eventEmitter.emit('USER_LOGGED_IN', { userId: user.authId });
         return {token:token};
       } else {
         throw new UnauthorizedException('Invalid password/email');
@@ -404,7 +419,7 @@ async validateUser( email:string, password:string): Promise<{token:string} | nul
       }
     });
     if(!updatedUser){
-      throw new InternalServerErrorException('Failed to update password')
+      throw new InternalServerErrorException('Failed to update password') 
     }
     await this.mailerService.sendPasswordChangeNotification(user.email)
     return {message: 'Password updated'}

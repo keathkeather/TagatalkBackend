@@ -43,4 +43,30 @@ export class SpeechToTextController {
   ) file: Express.Multer.File, @Body('correctAnswer') correctAnswer: string) {
     return await this.speechToTextService.processAudioFileWithChecker(file,correctAnswer);
   }
+
+  @Post('transcribe-audio-file')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('audio')) // Use the name of the field that contains the audio file
+  async transcribeAudioFile(@UploadedFile(
+    new ParseFilePipeBuilder()
+    .addFileTypeValidator({
+      fileType: 'audio/*',
+    })
+    .addMaxSizeValidator({
+      maxSize: 10 * 1024 * 1024, //
+    })
+    .build({
+      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY
+    }),
+
+  ) file: Express.Multer.File) {
+    return await this.speechToTextService.transcribeAudio(file);
+  }
+
+
+  @Post('Check-transcription')
+  @UseGuards(JwtAuthGuard)
+  async checkTranscription(@Body('transcription') transcription: string, @Body('correctAnswer') correctAnswer: string) {
+    return await this.speechToTextService.checkTranscription(transcription,correctAnswer);
+  }
 }

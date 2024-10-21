@@ -225,5 +225,24 @@ export class UserService {
             throw new Error('Failed to calculate user rank');
         }
     }
+
+    @OnEvent('USER_LOGGED_IN')
+    async setLastLogin({userId}:{userId:string}){
+        try{
+            return this.prisma.user.update({
+                where:{
+                    userId:userId
+                },
+                data:{
+                    lastLogin:new Date()
+                }
+            })
+        }catch(error){
+            throw new Error('failed to set last login')
+        }
+    }
+
+   
+    
 }
 
