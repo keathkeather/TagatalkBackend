@@ -10,7 +10,7 @@ export class UserProgressController {
 
     @Post('create-user-progress/:lessonId')
     addUserProgress(@Req() request: Request, @Param('lessonId') lessonId: string) {
-        this.userProgressService.addUserProgress(request, lessonId);
+        return this.userProgressService.addUserProgress(request, lessonId);
     }
     @Get('getUserProgress')
     getUserProgress(@Req() request:Request){

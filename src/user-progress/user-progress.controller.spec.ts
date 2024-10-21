@@ -10,7 +10,7 @@ import { LessonModule } from '../lesson/lesson.module';
 import { UnitModule } from '../unit/unit.module'; // Ensure this is imported if needed
 import { forwardRef } from '@nestjs/common';
 import { LessonService } from '../lesson/lesson.service';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { S3Service } from '../s3/s3.service';
 describe('UserProgressService', () => {
   let service: UserProgressService;
@@ -18,12 +18,13 @@ describe('UserProgressService', () => {
 
   beforeEach(async () => {
     module = await Test.createTestingModule({
-      providers: [UserProgressService, PrismaService, JwtService, UserService, LessonService,{ provide: EventEmitter2, useValue: new EventEmitter2() },S3Service],
+      providers: [UserProgressService, PrismaService, JwtService, UserService, LessonService,S3Service],
       imports: [
         forwardRef(() => GameModule), 
         forwardRef(() => AuthModule),
         forwardRef(() => LessonModule),
         forwardRef(() => UnitModule), 
+        EventEmitterModule
         // Add this line if UnitModule is necessary
       ],
     }).compile();

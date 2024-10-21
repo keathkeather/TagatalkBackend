@@ -9,7 +9,7 @@ import { AuthModule } from '../auth/auth.module';
 import { LessonModule } from '../lesson/lesson.module';
 import { UnitModule } from '../unit/unit.module';
 import { forwardRef } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { LessonService } from '../lesson/lesson.service';
 import { S3Service } from '../s3/s3.service';
 
@@ -19,12 +19,13 @@ describe('UserProgressService', () => {
 
   beforeEach(async () => {
     module = await Test.createTestingModule({
-      providers: [UserProgressService, PrismaService,LessonService, JwtService, UserService,{ provide: EventEmitter2, useValue: new EventEmitter2() },S3Service],
-      imports: [
+        providers: [UserProgressService, PrismaService,LessonService, JwtService, UserService,S3Service],
+        imports: [
         forwardRef(() => GameModule),
         forwardRef(() => AuthModule),
         forwardRef(() => LessonModule),
         forwardRef(() => UnitModule), // Include UnitModule here
+        EventEmitterModule
       ],
     }).compile();
 
