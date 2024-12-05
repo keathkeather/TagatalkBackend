@@ -178,9 +178,14 @@ export class UserService {
                 isAdmin:false,
                 auth:{
                     banned_until:null,
-                    is_super_admin:false
+                    OR: [
+                        { is_super_admin: null },
+                        { is_super_admin: false }
+                    ]
+
                 }
             },
+           
             take:10
         })
         
