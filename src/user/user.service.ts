@@ -182,6 +182,7 @@ export class UserService {
                         { is_super_admin: null },
                         { is_super_admin: false }
                     ]
+
                 }
             },
            

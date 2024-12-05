@@ -25,18 +25,13 @@ export class GameAssetsService {
             throw new BadRequestException('Game not found');
         }
     
-        this.logger.log('textContent:', textContent);
-        this.logger.log('gameId:', gameId);
-        this.logger.log('Uploading game assets');
     
         const allFiles = Object.values(files).flat();
         const textAssets = Array.isArray(textContent) ? textContent : [textContent]; // Ensure textContent is always an array
         const numFiles = allFiles.length;
         const numTextAssets = textAssets.length;
     
-        this.logger.log('textAssets:', textAssets);
-        this.logger.log('assetClassifier:', assetClassifier); // Log assetClassifier for debugging
-    
+
         try {
             // * Process files
             if (numFiles > 0) {
@@ -68,7 +63,7 @@ export class GameAssetsService {
                         }
     
                         // * Upload the file to S3
-                        await this.s3Service.uploadGameFile(file, process.env.AWS_GAME_ASSET_TESTING, gameId);
+                        await this.s3Service.uploadGameFile(file, process.env.AWS_BUCKET_NAME, gameId);
     
                         // * Save file details to the database
                         await this.prisma.game_Assets.create({
@@ -116,13 +111,7 @@ export class GameAssetsService {
                         }
 
                         const assetName = `textAsset${index + 1 + numFiles}`; // Ensure unique asset names
-                        // Log details for debugging
-                        this.logger.log('textContent:', textContent);
-                        this.logger.log('assetName:', assetName);
-                        this.logger.log('currentAssetClassifier:', currentAssetClassifier);
-                        this.logger.log('currentAssetType:', currentAssetType);
-                        this.logger.log('currentIsCorrectAnswer:', currentIsCorrectAnswer);
-
+                        // Log details for debuggin
                         // Save text details to the database
                         await this.prisma.game_Assets.create({
                             data: {
@@ -158,7 +147,7 @@ export class GameAssetsService {
                 throw new BadRequestException('Asset not found')
             }
             if(asset.fileUrl){
-                await this.s3Service.deleteObject(process.env.AWS_GAME_ASSET_TESTING,asset.fileUrl)
+                await this.s3Service.deleteObject(process.env.AWS_BUCKET_NAME,asset.fileUrl)
             }
             await this.prisma.game_Assets.delete({
                 where:{
@@ -179,7 +168,7 @@ export class GameAssetsService {
                 }
             })
             if(file){
-                await this.s3Service.uploadGameFile(file,process.env.AWS_GAME_ASSET_TESTING,gameId)
+                await this.s3Service.uploadGameFile(file,process.env.AWS_BUCKET_NAME,gameId)
                 await this.prisma.game_Assets.update({
                     where:{
                         id:assetId
@@ -209,7 +198,7 @@ export class GameAssetsService {
 
         for(const asset of assets){
             if(asset.fileUrl){
-                const downloadUrl = await this.s3Service.getSignedUrl(process.env.AWS_GAME_ASSET_TESTING,asset.fileUrl)
+                const downloadUrl = await this.s3Service.getSignedUrl(process.env.AWS_BUCKET_NAME,asset.fileUrl)
                 const fileAsset:fileAssetDto = {
                     assetId:asset.id,
                     assetClassifier:asset.assetClassifier,
