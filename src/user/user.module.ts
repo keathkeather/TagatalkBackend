@@ -20,7 +20,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       signOptions:{expiresIn:'1h'}
     }),
     AuthModule,
-    EventEmitterModule
+    EventEmitterModule.forRoot(),
   ],
   providers: [
     UserService,

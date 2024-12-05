@@ -182,9 +182,14 @@ export class UserService {
                         { is_super_admin: null },
                         { is_super_admin: false }
                     ]
+<<<<<<< HEAD
                     
                 },
                 isDeleted:false
+=======
+
+                }
+>>>>>>> 3d4f037d07ac7182b921c002ce20765e8b74030a
             },
            
             take:10
