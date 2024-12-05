@@ -175,8 +175,16 @@ export class UserService {
                 userPoints:'desc'
             },
             where:{
-                isAdmin:false
+                isAdmin:false,
+                auth:{
+                    banned_until:null,
+                    OR: [
+                        { is_super_admin: null },
+                        { is_super_admin: false }
+                    ]
+                }
             },
+           
             take:10
         })
         
