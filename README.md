@@ -1,73 +1,99 @@
+
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
+<img src="readmeImg.png">
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+&nbsp;
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+[![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
+[![first-timers-only Friendly](https://img.shields.io/badge/first--timers--only-friendly-blue.svg)](http://www.firsttimersonly.com/)
 
-## Description
+# Tagatalk Backend Repository
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+This is the backend repository for the Tagatalk project, aimed at fostering the use of the Tagalog language among younger generations. Built using NestJS, Prisma, and PostgreSQL.
 
-## Installation
+## Functionalities ✨
+1. API endpoints for user authentication, game assets, and email verification.
+2. Integration with AWS S3 for game asset management.
+3. OpenAI API for language-related functionalities.
+4. Email notifications using Tagatalk’s email service.
+5. PostgreSQL database management with Prisma ORM.
 
-```bash
-$ npm install
-```
+## Setup ✨
 
-## Running the app
+### Prerequisites
+1. Install [Node.js](https://nodejs.org/) and a package manager (npm, yarn, etc.).
+2. Install [PostgreSQL](https://www.postgresql.org/).
 
-```bash
-# development
-$ npm run start
+### Installation
 
-# watch mode
-$ npm run start:dev
+1. Clone the Backend Repository:
+   ```bash
+   git clone https://github.com/keathkeather/TagatalkBackend.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd TagatalkBackend
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   # Or, if using yarn:
+   yarn install
+   ```
+4. Create a local environment file `.env` and add the following variables:
+   - `SALT`
+   - `SECRET_KEY`
+   - `AWS_S3_REGION`
+   - `AWS_ACCESS_KEY`
+   - `AWS_SECRET_ACCESS_KEY`
+   - `AWS_BUCKET_NAME`
+   - `AWS_PROFILE_BUCKET_NAME`
+   - `AWS_GAME_ASSET_TESTING`
+   - `OPENAI_API_KEY`
+   - `EMAIL_USER` (Tagatalk Email)
+   - `EMAIL_PASS` (Tagatalk Email Password)
+   - `VERIFICATION_IP`
+   - `VERIFICATION_URL`
+   - `DATABASE_URL` (PostgreSQL database URL)
 
-# production mode
-$ npm run start:prod
-```
+5. Update the `schema.prisma` file in the cloned repository to use your local PostgreSQL database address.
 
-## Test
+6. Run Prisma migrations to set up the database:
+   ```bash
+   npx prisma migrate
+   ```
 
-```bash
-# unit tests
-$ npm run test
+7. Start the backend server locally:
+   ```bash
+   npm run start:dev
+   ```
 
-# e2e tests
-$ npm run test:e2e
+## Contributors ✨
 
-# test coverage
-$ npm run test:cov
-```
+Thanks goes to these wonderful people:
 
-## Support
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://keath.vercel.app"><img src="https://avatars.githubusercontent.com/u/67945664?s=400&v=4?s=100" width="100px;" alt="Keath Ian Lavador"/><br /><sub><b>Keath Ian Lavador</b></sub></a><br />💻🎨👀🔧</td>
+      <td align="center" valign="top" width="14.28%"><a href="#"><img src="https://avatars.githubusercontent.com/u/132324382?v=4?s=100" width="100px;" alt="Rynze Rj Lozano"/><br /><sub><b>Rynze Rj Lozano</b></sub></a><br />💻🎨</td>
+      <td align="center" valign="top" width="14.28%"><a href="#"><img src="https://avatars.githubusercontent.com/u/134193612?v=4?s=100" width="100px;" alt="Shania Canoy"/><br /><sub><b>Shania Canoy</b></sub></a><br />💻🎨</td>
+      <td align="center" valign="top" width="14.28%"><a href="#"><img src="https://avatars.githubusercontent.com/u/143623220?v=4?s=100" width="100px;" alt="Rustico John Ylaya"/><br /><sub><b>Rustico John Ylaya</b></sub></a><br />💻 🎨</td>
+    </tr>
+  </tbody>
+</table>
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
 
-## Stay in touch
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Thanks ✨
 
-## License
+A huge thanks to [Neon](https://neon.tech) for providing the PostgreSQL hosting services for the Tagatalk backend development needs.
 
-Nest is [MIT licensed](LICENSE).
+Feel free to fork the repository and contribute! ✨ Good luck and enjoy building with Tagatalk! 😊
